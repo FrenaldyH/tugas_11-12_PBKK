@@ -1,6 +1,23 @@
 <?php
 
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
-// Browser playground for the API (login, prompt, streaming, history)
-Route::view('/', 'playground', ['themes' => array_keys(config('llm.themes'))]);
+// Home: logged-in users go straight to the workspace, guests to the Breeze login page
+Route::redirect('/', '/workspace');
+
+// Agentic AI workspace (Livewire). Only for logged-in users; every query inside is scoped to auth()->id()
+Route::view('/workspace', 'workspace', ['themes' => array_keys(config('llm.themes'))])
+    ->middleware('auth')
+    ->name('workspace');
+
+// Browser playground for the Pertemuan 11 token API (login, prompt, streaming, history)
+Route::view('/playground', 'playground', ['themes' => array_keys(config('llm.themes'))])->name('playground');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+require __DIR__.'/auth.php';

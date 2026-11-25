@@ -12,8 +12,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // No redirect for API guests (there is no "login" route); the exception handler answers 401 JSON instead
-        $middleware->redirectGuestsTo(fn ($request) => $request->is('api/*') ? null : '/');
+        // API guests get no redirect (the exception handler answers 401 JSON); web guests go to the Breeze login page
+        $middleware->redirectGuestsTo(fn ($request) => $request->is('api/*') ? null : route('login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // API clients always get JSON errors; otherwise a missing token would try to redirect to a login page
