@@ -227,6 +227,7 @@
             <a class="brand" href="{{ route('workspace') }}">PromptLab</a>
             <div class="nav-links">
                 <a href="{{ route('workspace') }}">Workspace</a>
+                <a href="{{ route('scan') }}">Scan Proyek</a>
                 <a href="{{ route('playground') }}" aria-current="page">Playground API</a>
             </div>
         </div>

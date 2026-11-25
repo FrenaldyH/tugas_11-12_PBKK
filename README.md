@@ -24,7 +24,7 @@ dan **Senopati AI ITS** sebagai fallback otomatis. Desain antarmuka: [`notes/DES
 
 | Ketentuan | Implementasi |
 |---|---|
-| 1. Minimal 2 komponen Livewire yang berinteraksi lewat Events | 4 komponen: [`ConversationSidebar`](app/Livewire/ConversationSidebar.php), [`ChatBox`](app/Livewire/ChatBox.php), [`CodePanel`](app/Livewire/CodePanel.php), [`ScanMonitor`](app/Livewire/ScanMonitor.php). Berkomunikasi hanya lewat `$this->dispatch()` / `$dispatch()` dan listener `#[On]` (lihat [Alur Livewire](#alur-livewire)) |
+| 1. Minimal 2 komponen Livewire yang berinteraksi lewat Events | Di `/workspace` ada 3 komponen: [`ConversationSidebar`](app/Livewire/ConversationSidebar.php), [`ChatBox`](app/Livewire/ChatBox.php), [`CodePanel`](app/Livewire/CodePanel.php). Berkomunikasi hanya lewat `$this->dispatch()` / `$dispatch()` dan listener `#[On]` (lihat [Alur Livewire](#alur-livewire)). Komponen ke-4, [`ScanMonitor`](app/Livewire/ScanMonitor.php), ada di halaman `/scan` |
 | 2. Panel hanya untuk user login (Breeze), state terikat `user_id` | Rute `/workspace` di middleware `auth`; login/register/profil dari Breeze. Semua query lewat relasi user yang login ([`OwnsConversations`](app/Livewire/Concerns/OwnsConversations.php)), jadi id milik orang lain → 404. Properti id ditandai `#[Locked]` agar tidak bisa diubah dari browser |
 | 3. `wire:loading` pada tombol submit, cegah klik ganda | Tombol kirim: `wire:loading.attr="disabled"` + `@disabled($waiting)` selama AI menjawab, plus pengaman di server (`send()` diabaikan saat `$waiting`) |
 | 4. Prompt & respons AI tersimpan berurutan di MySQL, model `ChatMessage` | Tabel `conversations` + `chat_messages` ([migrasi](database/migrations/2026_11_26_090100_create_chat_messages_table.php), [`ChatMessage`](app/Models/ChatMessage.php)). Pesan user disimpan **sebelum** LLM dipanggil; jawaban (berhasil maupun gagal) disimpan setelahnya |
@@ -32,16 +32,17 @@ dan **Senopati AI ITS** sebagai fallback otomatis. Desain antarmuka: [`notes/DES
 | Lifecycle hooks | `mount()` membuka percakapan terakhir setelah refresh; `updatedPrompt()` memperbarui sisa karakter dan memvalidasi saat mengetik; `updatedTheme()` menyimpan tema ke percakapan |
 | **Challenge 1:** animasi pengetikan bertahap | Streaming sungguhan, bukan simulasi: `answer()` membaca SSE dari LLM dan meneruskan tiap potongan ke browser dengan `$this->stream()` → `wire:stream="answer"`, lengkap dengan caret berkedip |
 | **Challenge 2:** split-panel code visualizer + syntax highlighting | `CodePanel` mendeteksi blok kode berpagar (```` ```php ... ``` ````) di jawaban, satu tab per blok, diwarnai **highlight.js**, ada tombol salin; blok kode di dalam bubble chat juga diwarnai |
-| **Challenge 3:** `wire:poll` + progress bar | `ScanMonitor` menjalankan job queue [`ScanWorkspaceFiles`](app/Jobs/ScanWorkspaceFiles.php): hash SHA-256 tiap file, cari kredensial yang ditulis langsung di kode, dan bandingkan dengan scan sebelumnya. `wire:poll.1s` hanya dipasang selama scan berjalan |
+| **Challenge 3:** `wire:poll` + progress bar | Halaman sendiri **Scan Proyek** (`/scan`), karena yang diperiksa adalah kode sumber aplikasi ini, bukan percakapan. `ScanMonitor` menjalankan job queue [`ScanWorkspaceFiles`](app/Jobs/ScanWorkspaceFiles.php): hash SHA-256 tiap file, cari kredensial yang ditulis langsung di kode, dan bandingkan dengan scan sebelumnya. `wire:poll.1s` hanya dipasang selama scan berjalan |
 | `.env` dan `vendor/` tidak ikut Git | `.gitignore` |
 
 Tambahan: pencarian percakapan (`wire:model.live.debounce`), hapus percakapan (`wire:confirm`), tema agent per
 percakapan, 10 pesan terakhir dikirim ke model sebagai konteks (chat multi-turn), batas 20 pesan/menit per user, dan
-tombol "Tanyakan temuan ini ke AI" yang mengirim hasil scan ke chat box lewat event.
+tombol "Tanyakan ke AI di Workspace" di halaman scan yang membuka percakapan baru dengan prompt berisi temuan scan
+(dikirim lewat session flash, belum terkirim ke AI sampai user menekan Kirim).
 
 ### Tangkapan layar
 
-| Jawaban mengalir (Challenge 1) | Selesai: kode berwarna + hasil scan (Challenge 2 & 3) |
+| Jawaban mengalir (Challenge 1) | Halaman Scan Proyek (Challenge 3) |
 |---|---|
 | ![Streaming](docs/screenshots/streaming.png) | ![Scan selesai](docs/screenshots/scan-selesai.png) |
 
@@ -54,15 +55,16 @@ tombol "Tanyakan temuan ini ke AI" yang mengirim hasil scan ke chat box lewat ev
 
 ## Alur Livewire
 
-Halaman `/workspace` ([`workspace.blade.php`](resources/views/workspace.blade.php)) berisi empat komponen terpisah.
-Tidak ada komponen yang memanggil komponen lain secara langsung; semuanya lewat event.
+Halaman `/workspace` ([`workspace.blade.php`](resources/views/workspace.blade.php)) berisi tiga komponen terpisah, dan
+halaman `/scan` ([`scan.blade.php`](resources/views/scan.blade.php)) berisi `ScanMonitor`. Tidak ada komponen yang
+memanggil komponen lain secara langsung; di dalam satu halaman semuanya lewat event, antarhalaman lewat session flash.
 
 ```mermaid
 flowchart LR
     S["ConversationSidebar<br/>(daftar percakapan)"]
     C["ChatBox<br/>(bubble + prompt)"]
     K["CodePanel<br/>(highlight.js)"]
-    M["ScanMonitor<br/>(wire:poll)"]
+    M["ScanMonitor<br/>(halaman /scan, wire:poll)"]
     DB[("MySQL<br/>conversations<br/>chat_messages<br/>scan_runs")]
     LLM["LlmClient<br/>Ollama → Senopati"]
     Q["Queue worker<br/>ScanWorkspaceFiles"]
@@ -72,7 +74,7 @@ flowchart LR
     C -- "conversation-saved {id}" --> S
     C -- "answer-saved {id}" --> K
     C -- "show-code {id}" --> K
-    M -- "use-prompt {text}" --> C
+    M -. "session flash: prompt temuan" .-> C
     C <--> DB
     C -- "stream()" --> LLM
     M -- "dispatch job" --> Q
@@ -118,12 +120,12 @@ Catatan keamanan:
 
 | Kriteria (bobot) | Bukti |
 |---|---|
-| Desain & UI chat (30%) | Split-panel 3 kolom (riwayat / chat / inspector bertab Kode & Scan yang bisa ditutup), kolom chat terpusat, composer berbentuk kartu, riwayat dikelompokkan per waktu; di layar kecil riwayat dan inspector menjadi laci geser, tanpa scroll horizontal sampai 390 px |
+| Desain & UI chat (30%) | Split-panel 3 kolom (riwayat / chat / panel kode yang bisa ditutup), scan di halaman sendiri, kolom chat terpusat, composer berbentuk kartu, riwayat dikelompokkan per waktu; di layar kecil riwayat dan inspector menjadi laci geser, tanpa scroll horizontal sampai 390 px |
 | Proteksi UX loading (20%) | `wire:loading.attr="disabled"` + `@disabled($waiting)` + guard server; test `test_second_send_while_waiting_is_ignored` |
 | Integritas DB & riwayat (20%) | `conversations` / `chat_messages` terikat `user_id`; test `test_conversations_of_another_user_cannot_be_opened`, `test_conversation_id_cannot_be_changed_from_the_browser` |
 | Konektivitas API LLM (10%) | Streaming + fallback Ollama → Senopati dalam `try/catch`; test `test_falls_back_to_senopati_when_ollama_is_down`, `test_both_providers_down_saves_failed_answer_without_crashing` |
 | Eksplorasi challenge A+ (10%) | Ketiga challenge dikerjakan dan diuji (lihat tabel di atas) |
-| PSR-12 & demo (10%) | `./vendor/bin/pint --test` lulus; 60 test lulus |
+| PSR-12 & demo (10%) | `./vendor/bin/pint --test` lulus; 61 test lulus |
 
 ## Instalasi
 
@@ -411,7 +413,7 @@ Tabel `chat_logs` (Pertemuan 11) tetap dipakai oleh API `/api/chat-ai`.
 ## Test dan standar kode
 
 ```bash
-php artisan test          # 60 test
+php artisan test          # 61 test
 ./vendor/bin/pint --test  # PSR-12 (pint.json)
 ```
 
@@ -438,8 +440,9 @@ SQLite in-memory (`phpunit.xml`), terpisah dari database MySQL utama.
 5. **Percakapan baru**, lalu klik percakapan lama di sidebar → riwayat kembali dari MySQL. Refresh halaman → percakapan
    terakhir terbuka lagi (`mount()`).
 6. Ketik lebih dari 1000 karakter → sisa karakter merah + pesan error sebelum dikirim (`updatedPrompt()`).
-7. **Mulai scan** → progress bar bergerak lewat `wire:poll.1s`; setelah selesai, tunjukkan temuan kredensial dan klik
-   "Tanyakan temuan ini ke AI" (event `use-prompt` ke chat box).
+7. Buka menu **Scan Proyek** → **Mulai scan**: progress bar bergerak lewat `wire:poll.1s`. Setelah selesai, tunjukkan
+   temuan kredensial dan file yang berubah, lalu klik "Tanyakan ke AI di Workspace" → percakapan baru terbuka dengan
+   prompt berisi temuan.
 8. Login sebagai akun kedua (register) → sidebar kosong: riwayat terikat ke `user_id`.
 
 ## Pemetaan rubrik Pertemuan 11

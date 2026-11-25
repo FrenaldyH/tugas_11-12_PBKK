@@ -12,6 +12,10 @@ Route::redirect('/', '/workspace');
 Route::get('/workspace', WorkspaceController::class)->middleware('auth')->name('workspace');
 
 Route::middleware('auth')->group(function () {
+    // Background scan of this app's source code (Challenge 3, wire:poll). Its own page: it is about the
+    // project, not about a conversation in the workspace.
+    Route::view('/scan', 'scan')->name('scan');
+
     // Browser playground for the Pertemuan 11 token API. Uses the same login as the workspace:
     // its Bearer token is issued from the session, so there is no second login form.
     Route::get('/playground', [PlaygroundController::class, 'show'])->name('playground');

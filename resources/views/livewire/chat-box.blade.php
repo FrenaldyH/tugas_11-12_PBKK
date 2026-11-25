@@ -22,7 +22,7 @@
                 class="h-9 px-3 inline-flex items-center gap-2 rounded-lg text-sm font-medium transition"
                 :aria-pressed="$store.ui.panel.toString()">
             <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M2 4.25A2.25 2.25 0 0 1 4.25 2h11.5A2.25 2.25 0 0 1 18 4.25v11.5A2.25 2.25 0 0 1 15.75 18H4.25A2.25 2.25 0 0 1 2 15.75V4.25ZM12.5 3.5v13h3.25a.75.75 0 0 0 .75-.75V4.25a.75.75 0 0 0-.75-.75H12.5Z" clip-rule="evenodd" /></svg>
-            <span class="hidden sm:inline">Kode &amp; Scan proyek</span>
+            <span class="hidden sm:inline">Panel kode</span>
         </button>
     </header>
 
@@ -83,7 +83,7 @@
                                     @endif
                                     @if (Markdown::codeBlocks($message->content) !== [])
                                         <button type="button" wire:click="$dispatch('show-code', { id: {{ $message->id }} })"
-                                                x-on:click="$store.ui.open('code')"
+                                                x-on:click="$store.ui.openPanel()"
                                                 class="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 -mx-1.5 font-medium text-ink hover:bg-soft">
                                             <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M6.28 5.22a.75.75 0 0 1 0 1.06L2.56 10l3.72 3.72a.75.75 0 0 1-1.06 1.06L.97 10.53a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Zm7.44 0a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L17.44 10l-3.72-3.72a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" /></svg>
                                             Buka di panel kode

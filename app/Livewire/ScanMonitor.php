@@ -9,8 +9,9 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
-// Right panel, bottom (Challenge 3): starts a background scan on the queue and follows it with wire:poll.
-// Polling only runs while a scan is queued/running; afterwards the panel stops asking the server.
+// "Scan Proyek" page (Challenge 3): starts a background scan of this app's source code on the queue and
+// follows it with wire:poll. Polling only runs while a scan is queued/running; afterwards the page stops
+// asking the server. It has its own page because it is about the project, not about a conversation.
 class ScanMonitor extends Component
 {
     use OwnsConversations;
@@ -36,7 +37,8 @@ class ScanMonitor extends Component
         unset($this->run);
     }
 
-    // Fill the chat box with a request to explain the findings (the user still presses send)
+    // Open the workspace on a new conversation with a prompt about the findings already typed in
+    // (the user still reviews it and presses send). Passed through the session, not the URL.
     public function askAi(): void
     {
         $run = $this->run;
@@ -48,11 +50,13 @@ class ScanMonitor extends Component
             ->map(fn ($f) => "- {$f['file']}:{$f['line']} ({$f['rule']})")
             ->implode("\n");
 
-        $this->dispatch('use-prompt', text: Str::limit(
+        session()->flash(ChatBox::PREFILL, Str::limit(
             "Hasil scan {$run->total} file proyek Laravel saya menemukan ".count($run->findings).' kemungkinan kredensial yang ditulis langsung di kode:'
             ."\n$findings\n\nJelaskan risikonya dan cara memindahkannya ke .env.",
             1000,
         ));
+
+        $this->redirectRoute('workspace');
     }
 
     #[Computed]

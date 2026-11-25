@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Livewire\ChatBox;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -11,8 +12,11 @@ class WorkspaceController extends Controller
 {
     public function __invoke(Request $request): View
     {
-        return view('workspace', [
-            'conversationId' => $request->user()->conversations()->latest('updated_at')->latest('id')->value('id'),
-        ]);
+        // Coming from "ask the AI" on the scan page: start a new conversation with the prepared prompt
+        $conversationId = $request->session()->has(ChatBox::PREFILL)
+            ? null
+            : $request->user()->conversations()->latest('updated_at')->latest('id')->value('id');
+
+        return view('workspace', ['conversationId' => $conversationId]);
     }
 }

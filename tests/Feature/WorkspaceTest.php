@@ -81,7 +81,7 @@ class WorkspaceTest extends TestCase
             ->assertSeeLivewire(ConversationSidebar::class)
             ->assertSeeLivewire(ChatBox::class)
             ->assertSeeLivewire(CodePanel::class)
-            ->assertSeeLivewire(ScanMonitor::class)
+            ->assertDontSeeLivewire(ScanMonitor::class) // the project scan has its own page
             ->assertViewHas('conversationId', $latest->id);
     }
 
@@ -356,8 +356,20 @@ class WorkspaceTest extends TestCase
         File::deleteDirectory($root);
     }
 
-    public function test_scan_findings_can_be_sent_to_the_chat_box_as_a_prompt(): void
+    public function test_scan_has_its_own_page(): void
     {
+        $this->get('/scan')->assertRedirect(route('login'));
+
+        $this->actingAs($this->user)->get('/scan')
+            ->assertOk()
+            ->assertSeeLivewire(ScanMonitor::class)
+            ->assertDontSeeLivewire(ChatBox::class)
+            ->assertSee(['app/', 'config/', 'routes/']);
+    }
+
+    public function test_asking_the_ai_about_findings_opens_a_new_conversation_with_the_prompt_typed_in(): void
+    {
+        $latest = $this->conversationFor($this->user, 'Percakapan lama');
         $this->user->scanRuns()->create([
             'status' => 'done', 'total' => 5, 'processed' => 5, 'changed' => [],
             'findings' => [['file' => 'config/x.php', 'line' => 7, 'rule' => 'hardcoded_credential']],
@@ -365,11 +377,18 @@ class WorkspaceTest extends TestCase
 
         Livewire::actingAs($this->user)->test(ScanMonitor::class)
             ->call('askAi')
-            ->assertDispatched('use-prompt', fn ($name, $params) => str_contains($params['text'], 'config/x.php:7'));
+            ->assertRedirect(route('workspace'));
+        $this->assertStringContainsString('config/x.php:7', session(ChatBox::PREFILL));
 
+        // The workspace starts a new conversation instead of reopening the latest one
+        $this->actingAs($this->user)->get('/workspace')->assertViewHas('conversationId', null);
+
+        // and the chat box has the prompt typed in, not sent
         Livewire::actingAs($this->user)->test(ChatBox::class)
-            ->dispatch('use-prompt', text: 'Jelaskan temuan scan')
-            ->assertSet('prompt', 'Jelaskan temuan scan')
-            ->assertSet('sisaKarakter', 1000 - mb_strlen('Jelaskan temuan scan'));
+            ->assertSet('conversationId', null)
+            ->assertSet('prompt', fn ($prompt) => str_contains($prompt, 'config/x.php:7'))
+            ->assertSet('sisaKarakter', fn ($left) => $left < 1000);
+        $this->assertDatabaseCount('chat_messages', 0);
+        $this->assertModelExists($latest);
     }
 }

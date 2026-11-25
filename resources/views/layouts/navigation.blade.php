@@ -6,6 +6,7 @@
 
                 <div class="hidden sm:flex h-full gap-6">
                     <x-nav-link :href="route('workspace')" :active="request()->routeIs('workspace')">Workspace</x-nav-link>
+                    <x-nav-link :href="route('scan')" :active="request()->routeIs('scan')">Scan Proyek</x-nav-link>
                     <x-nav-link :href="route('playground')" :active="request()->routeIs('playground')">Playground API</x-nav-link>
                 </div>
             </div>
@@ -59,6 +60,7 @@
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden border-t border-white/15">
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('workspace')" :active="request()->routeIs('workspace')">Workspace</x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('scan')" :active="request()->routeIs('scan')">Scan Proyek</x-responsive-nav-link>
             <x-responsive-nav-link :href="route('playground')" :active="request()->routeIs('playground')">Playground API</x-responsive-nav-link>
         </div>
 

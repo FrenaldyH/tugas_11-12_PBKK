@@ -14,19 +14,17 @@ document.addEventListener('alpine:init', () => {
     const Alpine = window.Alpine;
 
     // Workspace layout state shared by all Livewire components on the page:
-    // sidebar = conversation drawer (below lg), panel = inspector (Kode / Scan), tab = active inspector tab.
+    // sidebar = conversation drawer (below lg), panel = code panel (drawer below xl, column from xl).
     const wide = window.matchMedia(XL).matches;
     const saved = remember.get('promptlab.panel');
     Alpine.store('ui', {
         sidebar: false,
         panel: wide && saved !== '0',
-        tab: 'code',
         togglePanel(force) {
             this.panel = force ?? !this.panel;
             if (window.matchMedia(XL).matches) remember.set('promptlab.panel', this.panel ? '1' : '0');
         },
-        open(tab) {
-            this.tab = tab;
+        openPanel() {
             this.togglePanel(true);
         },
         closeDrawers() {

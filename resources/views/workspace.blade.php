@@ -1,4 +1,4 @@
-{{-- Agentic AI workspace: conversations | chat | inspector (Kode / Scan).
+{{-- Agentic AI workspace: conversations | chat | code panel. (The project scan has its own page, /scan.)
      Each panel is its own Livewire component; they only talk through events (see README "Alur Livewire").
      Layout state (open drawers, active tab) lives in Alpine.store('ui'), see resources/js/app.js. --}}
 <x-app-layout>
@@ -7,7 +7,7 @@
     <div class="relative flex h-[calc(100dvh-3.5rem)] min-h-0 overflow-hidden bg-white"
          x-data x-on:keydown.escape.window="$store.ui.closeDrawers()">
 
-        {{-- Dim the page behind an open drawer (below lg for the sidebar, below xl for the inspector) --}}
+        {{-- Dim the page behind an open drawer (below lg for the sidebar, below xl for the code panel) --}}
         <div x-cloak x-show="$store.ui.sidebar || ($store.ui.panel && ! window.matchMedia('(min-width: 1280px)').matches)"
              x-transition.opacity x-on:click="$store.ui.closeDrawers()"
              class="fixed inset-0 z-30 bg-black/40 xl:hidden" aria-hidden="true"></div>
@@ -25,33 +25,24 @@
             <livewire:chat-box :conversation-id="$conversationId" />
         </section>
 
-        {{-- Inspector: drawer below xl, closable column from xl --}}
+        {{-- Code panel: drawer below xl, closable column from xl --}}
         <aside x-cloak x-show="$store.ui.panel"
                class="fixed inset-y-0 right-0 z-40 w-[30rem] max-w-[92vw] flex flex-col bg-gradient-to-b from-white via-white to-[#f6f8f3] border-l border-black/5 shadow-xl
                       xl:static xl:z-auto xl:max-w-none xl:shadow-none xl:w-[27rem] 2xl:w-[32rem] shrink-0"
-               aria-label="Inspector">
-            <div class="h-14 shrink-0 flex items-center gap-1 px-3 border-b border-black/5">
-                <div class="flex items-center gap-1 rounded-xl bg-gradient-to-b from-[#f4f4f2] to-[#ecece8] p-1 ring-1 ring-black/5" role="tablist">
-                    @foreach (['code' => 'Kode', 'scan' => 'Scan proyek'] as $tab => $label)
-                        <button type="button" role="tab" x-on:click="$store.ui.tab = '{{ $tab }}'"
-                                :aria-selected="($store.ui.tab === '{{ $tab }}').toString()"
-                                :class="$store.ui.tab === '{{ $tab }}' ? 'bg-white text-ink shadow-sm' : 'text-mute hover:text-ink'"
-                                class="h-8 px-3 rounded-md text-sm font-medium transition">
-                            {{ $label }}
-                        </button>
-                    @endforeach
-                </div>
+               aria-label="Panel kode">
+            <div class="h-14 shrink-0 flex items-center gap-2 px-4 border-b border-black/5">
+                <span class="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-lime-100 to-teal-100 text-success ring-1 ring-black/5" aria-hidden="true">
+                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6.28 5.22a.75.75 0 0 1 0 1.06L2.56 10l3.72 3.72a.75.75 0 0 1-1.06 1.06L.97 10.53a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Zm7.44 0a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L17.44 10l-3.72-3.72a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" /></svg>
+                </span>
+                <h2 class="text-[15px] font-semibold text-ink">Panel kode</h2>
                 <button type="button" x-on:click="$store.ui.togglePanel(false)"
-                        class="ml-auto grid h-9 w-9 place-items-center rounded-lg text-mute hover:bg-soft hover:text-ink" aria-label="Tutup panel">
+                        class="ml-auto grid h-9 w-9 place-items-center rounded-lg text-mute hover:bg-soft hover:text-ink" aria-label="Tutup panel kode">
                     <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" /></svg>
                 </button>
             </div>
 
-            <div x-show="$store.ui.tab === 'code'" class="flex-1 min-h-0 flex flex-col" role="tabpanel">
+            <div class="flex-1 min-h-0 flex flex-col">
                 <livewire:code-panel :conversation-id="$conversationId" />
-            </div>
-            <div x-show="$store.ui.tab === 'scan'" x-cloak class="flex-1 min-h-0 flex flex-col" role="tabpanel">
-                <livewire:scan-monitor />
             </div>
         </aside>
     </div>

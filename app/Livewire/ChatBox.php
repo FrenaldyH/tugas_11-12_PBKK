@@ -21,14 +21,18 @@ use Throwable;
 // Main panel: chat bubbles + prompt box. Sending is split into two requests:
 //   1. send()   saves the user bubble, clears the box and shows a "waiting" bubble immediately;
 //   2. answer() calls the LLM and streams the answer into that bubble (wire:stream), then saves it.
-// Events: listens to "conversation-selected" {id|null} and "use-prompt" {text};
+// Events: listens to "conversation-selected" {id|null};
 //         dispatches "conversation-saved" {id} (sidebar) and "answer-saved" {id} (code panel).
+// A prompt prepared on another page (the scan page's "ask the AI") arrives as a session flash (PREFILL).
 class ChatBox extends Component
 {
     use OwnsConversations;
 
     // Same limit as the API (ChatAiRequest)
     public const MAX = 1000;
+
+    // Session flash key for a prompt prepared on another page
+    public const PREFILL = 'workspace.prefill';
 
     // Bubbles kept on screen. Older ones stay in the database but are not loaded, so the page stays light.
     private const VISIBLE = 30;
@@ -52,6 +56,11 @@ class ChatBox extends Component
     public function mount(?int $conversationId = null): void
     {
         $this->open($conversationId);
+
+        // Typed in, not sent: the user reads it first and presses send
+        if (session()->has(self::PREFILL)) {
+            $this->usePrompt((string) session(self::PREFILL));
+        }
     }
 
     protected function rules(): array
@@ -102,8 +111,7 @@ class ChatBox extends Component
         unset($this->bubbles, $this->conversation);
     }
 
-    // Another panel suggests a prompt (e.g. "ask the AI about the scan result"); the user still presses send
-    #[On('use-prompt')]
+    // Put a suggested prompt in the box (empty-state suggestions, scan page); the user still presses send
     public function usePrompt(string $text): void
     {
         $this->prompt = Str::limit($text, self::MAX, '');
