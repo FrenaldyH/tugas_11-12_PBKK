@@ -22,10 +22,16 @@ class LlmClient
     // Build the messages array: theme system prompt first, then the user prompt.
     public function messages(string $prompt, string $theme = 'default'): array
     {
-        return [
-            ['role' => 'system', 'content' => config("llm.themes.$theme")],
-            ['role' => 'user', 'content' => $prompt],
-        ];
+        return $this->conversation([['role' => 'user', 'content' => $prompt]], $theme);
+    }
+
+    // Multi-turn chat (Livewire workspace): theme system prompt first, then earlier turns in order.
+    // $turns: [['role' => 'user'|'assistant', 'content' => '...'], ...], ending with the newest user prompt.
+    public function conversation(array $turns, string $theme = 'default'): array
+    {
+        $system = config("llm.themes.$theme") ?? config('llm.themes.default');
+
+        return [['role' => 'system', 'content' => $system], ...$turns];
     }
 
     // Providers tried during the last call, in order, so the UI can show the fallback path.

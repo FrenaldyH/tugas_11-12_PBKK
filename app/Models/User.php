@@ -56,4 +56,22 @@ class User extends Authenticatable
     {
         return $this->hasMany(ChatLog::class);
     }
+
+    // Workspace chat sessions (Livewire)
+    public function conversations(): HasMany
+    {
+        return $this->hasMany(Conversation::class);
+    }
+
+    // Every bubble this user owns, across all conversations
+    public function chatMessages(): HasMany
+    {
+        return $this->hasMany(ChatMessage::class);
+    }
+
+    // Background workspace scans started by this user
+    public function scanRuns(): HasMany
+    {
+        return $this->hasMany(ScanRun::class);
+    }
 }
