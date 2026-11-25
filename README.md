@@ -39,9 +39,9 @@ tombol "Tanyakan temuan ini ke AI" yang mengirim hasil scan ke chat box lewat ev
 |---|---|
 | ![Streaming](docs/screenshots/streaming.png) | ![Scan selesai](docs/screenshots/scan-selesai.png) |
 
-| Login (Breeze) | Mobile |
-|---|---|
-| ![Login](docs/screenshots/login.png) | ![Mobile](docs/screenshots/mobile.png) |
+| Login (Breeze) | Mobile | Mobile: laci riwayat |
+|---|---|---|
+| ![Login](docs/screenshots/login.png) | ![Mobile](docs/screenshots/mobile.png) | ![Riwayat mobile](docs/screenshots/mobile-riwayat.png) |
 
 > Tangkapan layar diambil dengan server LLM uji lokal yang meniru format streaming Ollama, karena Ollama dan Senopati
 > tidak terjangkau dari mesin pengambil gambar. Alur Livewire, database, dan tampilan yang terlihat adalah aplikasi asli.
@@ -112,7 +112,7 @@ Catatan keamanan:
 
 | Kriteria (bobot) | Bukti |
 |---|---|
-| Desain & UI chat (30%) | Split-panel 3 kolom (sidebar / chat / kode + scan), bubble kontras hitam-putih, responsif sampai 390 px tanpa scroll horizontal, mengikuti `notes/DESIGN.md` |
+| Desain & UI chat (30%) | Split-panel 3 kolom (riwayat / chat / inspector bertab Kode & Scan yang bisa ditutup), kolom chat terpusat, composer berbentuk kartu, riwayat dikelompokkan per waktu; di layar kecil riwayat dan inspector menjadi laci geser, tanpa scroll horizontal sampai 390 px |
 | Proteksi UX loading (20%) | `wire:loading.attr="disabled"` + `@disabled($waiting)` + guard server; test `test_second_send_while_waiting_is_ignored` |
 | Integritas DB & riwayat (20%) | `conversations` / `chat_messages` terikat `user_id`; test `test_conversations_of_another_user_cannot_be_opened`, `test_conversation_id_cannot_be_changed_from_the_browser` |
 | Konektivitas API LLM (10%) | Streaming + fallback Ollama → Senopati dalam `try/catch`; test `test_falls_back_to_senopati_when_ollama_is_down`, `test_both_providers_down_saves_failed_answer_without_crashing` |

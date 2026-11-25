@@ -1,8 +1,8 @@
-<nav x-data="{ open: false }" class="bg-black text-white">
-    <div class="px-4 sm:px-6">
-        <div class="flex justify-between h-16">
+<nav x-data="{ open: false }" class="bg-black text-white shrink-0">
+    <div class="px-4 sm:px-5">
+        <div class="flex justify-between h-14">
             <div class="flex items-center gap-8">
-                <a href="{{ route('workspace') }}" class="text-lg"><x-application-logo /></a>
+                <a href="{{ route('workspace') }}" class="text-[17px]"><x-application-logo /></a>
 
                 <div class="hidden sm:flex h-full gap-6">
                     <x-nav-link :href="route('workspace')" :active="request()->routeIs('workspace')">Workspace</x-nav-link>
@@ -10,20 +10,26 @@
                 </div>
             </div>
 
-            <!-- Settings Dropdown -->
+            <!-- Account menu -->
             <div class="hidden sm:flex sm:items-center">
-                <x-dropdown align="right" width="48">
+                <x-dropdown align="right" width="w-60">
                     <x-slot name="trigger">
-                        <button class="inline-flex items-center gap-1 px-3 py-2 text-sm font-bold rounded text-white hover:bg-white/10 transition">
+                        <button class="inline-flex items-center gap-2.5 pl-1.5 pr-2.5 py-1.5 rounded-lg text-sm font-medium text-white hover:bg-white/10 transition">
+                            <span class="grid h-7 w-7 place-items-center rounded-md bg-white/15 text-xs font-semibold uppercase" aria-hidden="true">
+                                {{ mb_substr(Auth::user()->name, 0, 1) }}
+                            </span>
                             <span>{{ Auth::user()->name }}</span>
-                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" aria-hidden="true">
+                            <svg class="h-4 w-4 text-white/60" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                             </svg>
                         </button>
                     </x-slot>
 
                     <x-slot name="content">
-                        <div class="px-4 py-2 text-xs text-mute border-b border-hairline">{{ Auth::user()->email }}</div>
+                        <div class="px-4 py-2.5 border-b border-black/5">
+                            <p class="text-sm font-semibold text-ink truncate">{{ Auth::user()->name }}</p>
+                            <p class="text-xs text-mute truncate">{{ Auth::user()->email }}</p>
+                        </div>
                         <x-dropdown-link :href="route('profile.edit')">Profil</x-dropdown-link>
 
                         <form method="POST" action="{{ route('logout') }}">
@@ -39,7 +45,7 @@
 
             <!-- Hamburger -->
             <div class="-me-2 flex items-center sm:hidden">
-                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded text-white hover:bg-white/10" aria-label="Menu">
+                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-lg text-white hover:bg-white/10" aria-label="Menu">
                     <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                         <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                         <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -50,15 +56,15 @@
     </div>
 
     <!-- Responsive Navigation Menu -->
-    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden border-t border-white/20">
+    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden border-t border-white/15">
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('workspace')" :active="request()->routeIs('workspace')">Workspace</x-responsive-nav-link>
             <x-responsive-nav-link :href="route('playground')" :active="request()->routeIs('playground')">Playground API</x-responsive-nav-link>
         </div>
 
-        <div class="pt-4 pb-1 border-t border-white/20">
+        <div class="pt-4 pb-1 border-t border-white/15">
             <div class="px-4">
-                <div class="font-bold text-base">{{ Auth::user()->name }}</div>
+                <div class="font-semibold text-base">{{ Auth::user()->name }}</div>
                 <div class="text-sm text-white/70">{{ Auth::user()->email }}</div>
             </div>
 

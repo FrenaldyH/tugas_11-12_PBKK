@@ -267,10 +267,10 @@ class ChatBox extends Component
                 default => Str::headline($key),
             }]),
             'suggestions' => [
-                'Buatkan komponen Livewire penghitung klik beserta view Blade-nya.',
-                'Apa beda wire:model, wire:model.live, dan wire:model.blur?',
-                'Perbaiki prompt ini: "dokumentasikan API login".',
-                'Tulis migration Laravel untuk tabel produk dengan relasi kategori.',
+                ['title' => 'Buat komponen', 'prompt' => 'Buatkan komponen Livewire penghitung klik beserta view Blade-nya.'],
+                ['title' => 'Jelaskan konsep', 'prompt' => 'Apa beda wire:model, wire:model.live, dan wire:model.blur?'],
+                ['title' => 'Perbaiki prompt', 'prompt' => 'Perbaiki prompt ini: "dokumentasikan API login".'],
+                ['title' => 'Rancang database', 'prompt' => 'Tulis migration Laravel untuk tabel produk dengan relasi kategori.'],
             ],
         ]);
     }

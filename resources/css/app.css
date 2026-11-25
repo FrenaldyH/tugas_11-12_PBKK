@@ -7,60 +7,107 @@
 @layer base {
     [x-cloak] { display: none !important; }
 
-    /* JetBrains Mono turns "->" and "=>" into arrows; code must show the characters the user will type */
-    code, pre, kbd, .font-mono { font-variant-ligatures: none; }
-
     /* Visible keyboard focus everywhere (DESIGN.md: primary-dark ring, 2px offset) */
     :focus-visible {
         outline: 2px solid #5a8d00;
         outline-offset: 2px;
     }
+
+    /* JetBrains Mono turns "->" and "=>" into arrows; code must show the characters the user will type */
+    code, pre, kbd, .font-mono { font-variant-ligatures: none; }
+    /* Inter also draws "->" as an arrow (contextual alternates); answers often mention code, so keep the characters */
+    .prose-chat, .no-ligatures { font-variant-ligatures: none; font-feature-settings: 'calt' 0; }
+
+    /* Thin, quiet scrollbars inside the panels */
+    .scroll-thin { scrollbar-width: thin; scrollbar-color: #d4d4d4 transparent; }
+    .scroll-thin-dark { scrollbar-width: thin; scrollbar-color: #4a4a4a transparent; }
 }
 
 @layer components {
     /* AI answers rendered from Markdown (App\Support\Markdown) */
-    .prose-chat > * + * { margin-top: 0.6rem; }
-    .prose-chat h1, .prose-chat h2, .prose-chat h3 { font-weight: 700; line-height: 1.3; }
-    .prose-chat h1 { font-size: 1.15rem; }
-    .prose-chat h2 { font-size: 1.05rem; }
-    .prose-chat ul { list-style: disc; padding-left: 1.25rem; }
-    .prose-chat ol { list-style: decimal; padding-left: 1.25rem; }
-    .prose-chat li + li { margin-top: 0.2rem; }
-    .prose-chat a { color: #0046a4; text-decoration: underline; }
-    .prose-chat strong { font-weight: 700; }
-    .prose-chat blockquote { border-left: 4px solid #cccccc; padding-left: 0.75rem; color: #5e5e5e; }
+    .prose-chat { color: #1a1a1a; font-size: 15px; line-height: 1.75; overflow-wrap: anywhere; }
+    .prose-chat > :first-child { margin-top: 0; }
+    .prose-chat > * + * { margin-top: 0.85rem; }
+    .prose-chat h1, .prose-chat h2, .prose-chat h3, .prose-chat h4 { font-weight: 600; line-height: 1.35; color: #000; }
+    .prose-chat h1 { font-size: 1.2rem; }
+    .prose-chat h2 { font-size: 1.1rem; }
+    .prose-chat h3, .prose-chat h4 { font-size: 1rem; }
+    .prose-chat ul { list-style: disc; padding-left: 1.35rem; }
+    .prose-chat ol { list-style: decimal; padding-left: 1.35rem; }
+    .prose-chat li + li { margin-top: 0.3rem; }
+    .prose-chat li::marker { color: #757575; }
+    .prose-chat a { color: #0046a4; text-decoration: underline; text-underline-offset: 2px; }
+    .prose-chat strong { font-weight: 600; color: #000; }
+    .prose-chat hr { border-color: #e5e5e5; }
+    .prose-chat blockquote { border-left: 3px solid #d4d4d4; padding-left: 0.9rem; color: #5e5e5e; }
     .prose-chat :not(pre) > code {
         font-family: 'JetBrains Mono', ui-monospace, monospace;
-        font-size: 0.85em;
-        background: rgba(0, 0, 0, 0.06);
-        padding: 0.1rem 0.3rem;
-        border-radius: 2px;
+        font-size: 0.84em;
+        background: #f2f2f2;
+        border: 1px solid #e8e8e8;
+        padding: 0.08rem 0.35rem;
+        border-radius: 4px;
     }
     .prose-chat pre {
-        background: #1a1a1a;
+        margin-top: 0 !important;
+        background: #161616;
         color: #fff;
-        border-radius: 2px;
-        padding: 0.75rem 1rem;
+        border-radius: 0 0 8px 8px;
+        padding: 0.9rem 1rem;
         overflow-x: auto;
         font-size: 0.8rem;
-        line-height: 1.6;
+        line-height: 1.65;
+        scrollbar-width: thin;
+        scrollbar-color: #4a4a4a transparent;
     }
-    .prose-chat pre code.hljs { padding: 0; background: transparent; }
-    .prose-chat table { border-collapse: collapse; font-size: 0.875rem; }
-    .prose-chat th, .prose-chat td { border: 1px solid #cccccc; padding: 0.25rem 0.5rem; }
+    /* The surrounding card already is dark; highlight.js must not draw a second box inside it */
+    pre code.hljs { padding: 0; background: transparent; }
+    .prose-chat table { border-collapse: collapse; font-size: 0.875rem; display: block; overflow-x: auto; }
+    .prose-chat th, .prose-chat td { border: 1px solid #e5e5e5; padding: 0.35rem 0.6rem; text-align: left; }
+    .prose-chat th { background: #f7f7f7; font-weight: 600; }
+
+    /* Header bar above each code block in a chat answer (added by x-highlight) */
+    .code-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #262626;
+        color: rgba(255, 255, 255, 0.7);
+        border-radius: 8px 8px 0 0;
+        padding: 0.35rem 0.5rem 0.35rem 1rem;
+        font: 500 12px/1.5 'JetBrains Mono', ui-monospace, monospace;
+    }
+    .code-head button {
+        font: 600 12px/1 Inter, Arial, sans-serif;
+        color: #fff;
+        padding: 0.35rem 0.6rem;
+        border-radius: 4px;
+    }
+    .code-head button:hover { background: rgba(255, 255, 255, 0.1); }
 
     /* Blinking block caret while an answer streams in */
     .caret {
         display: inline-block;
-        width: 8px;
-        height: 1em;
+        width: 7px;
+        height: 1.05em;
         margin-left: 2px;
         vertical-align: text-bottom;
         background: #76b900;
         animation: caret-blink 1s steps(1) infinite;
     }
     @keyframes caret-blink { 50% { opacity: 0; } }
+
+    /* Three dots shown while waiting for the first word */
+    .typing-dots { display: inline-flex; gap: 4px; }
+    .typing-dots span {
+        width: 6px; height: 6px; border-radius: 9999px; background: #9a9a9a;
+        animation: typing 1.2s infinite ease-in-out;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes typing { 0%, 80%, 100% { opacity: 0.3; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+
     @media (prefers-reduced-motion: reduce) {
-        .caret { animation: none; }
+        .caret, .typing-dots span { animation: none; }
     }
 }

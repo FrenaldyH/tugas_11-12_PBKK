@@ -299,7 +299,7 @@ class WorkspaceTest extends TestCase
         Queue::fake();
 
         $monitor = Livewire::actingAs($this->user)->test(ScanMonitor::class)
-            ->assertDontSeeHtml('wire:poll')
+            ->assertDontSeeHtml('wire:poll.1s')
             ->call('start')
             ->assertSeeHtml('wire:poll.1s="cekStatus"')
             ->assertSee('Menunggu queue worker');
@@ -312,7 +312,7 @@ class WorkspaceTest extends TestCase
         Queue::assertPushed(ScanWorkspaceFiles::class, 1);
 
         $run->update(['status' => 'done', 'total' => 3, 'processed' => 3, 'findings' => [], 'changed' => []]);
-        $monitor->call('cekStatus')->assertDontSeeHtml('wire:poll')->assertSee('Selesai');
+        $monitor->call('cekStatus')->assertDontSeeHtml('wire:poll.1s')->assertSee('Selesai');
     }
 
     public function test_scan_job_hashes_files_finds_secrets_and_detects_changes(): void

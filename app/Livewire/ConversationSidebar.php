@@ -72,6 +72,19 @@ class ConversationSidebar extends Component
             ->get();
     }
 
+    // Same list, grouped under "Hari ini", "Kemarin", "7 hari terakhir", "Lebih lama" (empty groups dropped)
+    #[Computed]
+    public function groups(): Collection
+    {
+        return $this->conversations
+            ->groupBy(fn ($conversation) => match (true) {
+                $conversation->updated_at->isToday() => 'Hari ini',
+                $conversation->updated_at->isYesterday() => 'Kemarin',
+                $conversation->updated_at->greaterThan(now()->subDays(7)) => '7 hari terakhir',
+                default => 'Lebih lama',
+            });
+    }
+
     public function render()
     {
         return view('livewire.conversation-sidebar');
