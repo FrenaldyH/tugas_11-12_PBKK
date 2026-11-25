@@ -1,4 +1,4 @@
-<nav x-data="{ open: false }" class="bg-black text-white shrink-0">
+<nav x-data="{ open: false }" class="nav-glow bg-black text-white shrink-0">
     <div class="px-4 sm:px-5">
         <div class="flex justify-between h-14">
             <div class="flex items-center gap-8">
@@ -15,7 +15,7 @@
                 <x-dropdown align="right" width="w-60">
                     <x-slot name="trigger">
                         <button class="inline-flex items-center gap-2.5 pl-1.5 pr-2.5 py-1.5 rounded-lg text-sm font-medium text-white hover:bg-white/10 transition">
-                            <span class="grid h-7 w-7 place-items-center rounded-md bg-white/15 text-xs font-semibold uppercase" aria-hidden="true">
+                            <span class="grid h-7 w-7 place-items-center rounded-md bg-gradient-to-br from-lime-400 to-teal-500 text-black text-xs font-bold uppercase" aria-hidden="true">
                                 {{ mb_substr(Auth::user()->name, 0, 1) }}
                             </span>
                             <span>{{ Auth::user()->name }}</span>

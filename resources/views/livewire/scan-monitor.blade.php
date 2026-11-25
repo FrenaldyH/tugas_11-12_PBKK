@@ -15,7 +15,7 @@
     </div>
 
     {{-- Progress card --}}
-    <div class="rounded-xl border border-black/10 p-4">
+    <div class="rounded-xl border border-black/10 bg-gradient-to-b from-white to-[#fafaf8] p-4 shadow-[0_8px_24px_-18px_rgba(0,0,0,0.5)]">
         @if ($run)
             @php $percent = $run->percent(); @endphp
             <div class="flex items-center justify-between gap-3 text-sm">
@@ -39,7 +39,7 @@
 
             <div class="mt-3 h-2 rounded-full bg-soft overflow-hidden" role="progressbar" aria-label="Progres scan"
                  aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $percent }}">
-                <div @class(['h-full rounded-full transition-[width] duration-500', 'bg-danger' => $run->status === 'failed', 'bg-brand' => $run->status !== 'failed'])
+                <div @class(['h-full rounded-full transition-[width] duration-500', 'bg-danger' => $run->status === 'failed', 'progress-fill' => $run->status !== 'failed', 'is-running' => $run->isActive()])
                      style="width: {{ $percent }}%"></div>
             </div>
 
@@ -64,8 +64,7 @@
         @endif
 
         <button type="button" wire:click="start" wire:loading.attr="disabled" wire:target="start" @disabled($run?->isActive())
-                class="mt-4 w-full h-10 inline-flex items-center justify-center gap-2 rounded-lg bg-black text-white text-sm font-medium hover:bg-body transition
-                       disabled:bg-soft disabled:text-mute disabled:cursor-not-allowed">
+                class="btn-ink mt-4 w-full h-10 inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium disabled:cursor-not-allowed">
             @if ($run?->isActive())
                 <x-spinner /> Scan sedang berjalan
             @else
@@ -79,7 +78,7 @@
 
         <div class="grid grid-cols-3 gap-2">
             @foreach ([['File', $run->total, 'text-ink'], ['Temuan', count($findings), count($findings) ? 'text-danger' : 'text-ink'], ['Berubah', count($changed), 'text-ink']] as [$label, $value, $color])
-                <div class="rounded-xl bg-soft px-3 py-2.5">
+                <div class="rounded-xl bg-gradient-to-br from-[#f7f8f4] to-[#eef3ec] px-3 py-2.5 ring-1 ring-black/5">
                     <p class="text-xs text-mute">{{ $label }}</p>
                     <p class="text-xl font-semibold tabular-nums {{ $color }}">{{ $value }}</p>
                 </div>

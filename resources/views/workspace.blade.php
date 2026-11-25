@@ -13,7 +13,7 @@
              class="fixed inset-0 z-30 bg-black/40 xl:hidden" aria-hidden="true"></div>
 
         {{-- Conversations: drawer below lg, fixed column from lg --}}
-        <aside class="fixed inset-y-0 left-0 z-40 w-[18rem] max-w-[85vw] bg-soft border-r border-black/5 transition-transform duration-200
+        <aside class="fixed inset-y-0 left-0 z-40 w-[18rem] max-w-[85vw] bg-gradient-to-b from-[#fafaf8] via-[#f6f7f3] to-[#eef1ea] border-r border-black/5 transition-transform duration-200
                       lg:static lg:z-auto lg:w-[17rem] lg:max-w-none lg:translate-x-0 shrink-0"
                :class="$store.ui.sidebar ? 'translate-x-0 shadow-xl' : '-translate-x-full lg:translate-x-0'"
                aria-label="Riwayat percakapan">
@@ -27,11 +27,11 @@
 
         {{-- Inspector: drawer below xl, closable column from xl --}}
         <aside x-cloak x-show="$store.ui.panel"
-               class="fixed inset-y-0 right-0 z-40 w-[30rem] max-w-[92vw] flex flex-col bg-white border-l border-black/5 shadow-xl
+               class="fixed inset-y-0 right-0 z-40 w-[30rem] max-w-[92vw] flex flex-col bg-gradient-to-b from-white via-white to-[#f6f8f3] border-l border-black/5 shadow-xl
                       xl:static xl:z-auto xl:max-w-none xl:shadow-none xl:w-[27rem] 2xl:w-[32rem] shrink-0"
                aria-label="Inspector">
             <div class="h-14 shrink-0 flex items-center gap-1 px-3 border-b border-black/5">
-                <div class="flex items-center gap-1 rounded-lg bg-soft p-1" role="tablist">
+                <div class="flex items-center gap-1 rounded-xl bg-gradient-to-b from-[#f4f4f2] to-[#ecece8] p-1 ring-1 ring-black/5" role="tablist">
                     @foreach (['code' => 'Kode', 'scan' => 'Scan workspace'] as $tab => $label)
                         <button type="button" role="tab" x-on:click="$store.ui.tab = '{{ $tab }}'"
                                 :aria-selected="($store.ui.tab === '{{ $tab }}').toString()"

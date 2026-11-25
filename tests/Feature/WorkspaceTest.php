@@ -263,7 +263,7 @@ class WorkspaceTest extends TestCase
         $conversation->messages()->create(['user_id' => $this->user->id, 'role' => 'user', 'content' => 'Pesan di topik A']);
 
         Livewire::actingAs($this->user)->test(ChatBox::class)
-            ->assertSee('Mulai dari satu instruksi')
+            ->assertSee('satu instruksi.')
             ->dispatch('conversation-selected', id: $conversation->id)
             ->assertSet('conversationId', $conversation->id)
             ->assertSet('theme', 'evaluator')

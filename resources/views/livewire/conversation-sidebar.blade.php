@@ -2,7 +2,7 @@
     <div class="p-3 space-y-2.5">
         <div class="flex items-center gap-2">
             <button type="button" wire:click="startNew" x-on:click="$store.ui.sidebar = false"
-                    class="flex-1 h-10 inline-flex items-center justify-center gap-2 rounded-lg bg-black text-white text-sm font-medium hover:bg-body transition">
+                    class="btn-ink flex-1 h-10 inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium">
                 <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" /></svg>
                 Percakapan baru
             </button>
@@ -30,14 +30,13 @@
                         <button type="button" wire:click="select({{ $conversation->id }})" x-on:click="$store.ui.sidebar = false"
                                 @class([
                                     'w-full text-left rounded-lg pl-3 pr-10 py-2 transition',
-                                    'bg-white shadow-sm ring-1 ring-black/5' => $active,
-                                    'hover:bg-black/[0.04]' => ! $active,
+                                    'item-active' => $active,
+                                    'hover:bg-white/70' => ! $active,
                                 ])
                                 @if ($active) aria-current="true" @endif>
                             <span @class(['block text-sm truncate', 'font-semibold text-ink' => $active, 'text-body' => ! $active])>{{ $conversation->title }}</span>
                             <span class="mt-0.5 flex items-center gap-1.5 text-xs text-mute">
-                                @if ($active)<span class="h-1.5 w-1.5 rounded-full bg-brand" aria-hidden="true"></span>@endif
-                                {{ $conversation->messages_count }} pesan · {{ $conversation->updated_at->locale('id')->diffForHumans() }}
+                                                                {{ $conversation->messages_count }} pesan · {{ $conversation->updated_at->locale('id')->diffForHumans() }}
                             </span>
                         </button>
                         <button type="button" wire:click="delete({{ $conversation->id }})"

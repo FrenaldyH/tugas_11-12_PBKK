@@ -24,6 +24,180 @@
 }
 
 @layer components {
+    /* ---------- Visual layer: soft gradients, glow and glass (kept subtle so text stays readable) ---------- */
+
+    /* Soft green/teal light from the top of a surface */
+    .bg-aurora {
+        background-color: #fff;
+        background-image:
+            radial-gradient(48rem 22rem at 50% -8%, rgba(118, 185, 0, 0.13), transparent 70%),
+            radial-gradient(30rem 18rem at 100% 0%, rgba(20, 184, 166, 0.08), transparent 70%),
+            radial-gradient(26rem 16rem at 0% 10%, rgba(132, 204, 22, 0.06), transparent 70%);
+    }
+    /* Same idea on black (login panel, nav) */
+    .bg-aurora-dark {
+        background-color: #050505;
+        background-image:
+            radial-gradient(40rem 26rem at 15% 0%, rgba(118, 185, 0, 0.28), transparent 65%),
+            radial-gradient(34rem 24rem at 100% 100%, rgba(20, 184, 166, 0.18), transparent 65%),
+            linear-gradient(180deg, #0b0b0b, #050505);
+    }
+    /* Faint dot grid that fades out downwards */
+    .dot-grid {
+        background-image: radial-gradient(rgba(0, 0, 0, 0.07) 1px, transparent 1px);
+        background-size: 22px 22px;
+        -webkit-mask-image: linear-gradient(to bottom, #000, transparent 75%);
+        mask-image: linear-gradient(to bottom, #000, transparent 75%);
+    }
+    .dot-grid-dark {
+        background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+        background-size: 22px 22px;
+        -webkit-mask-image: radial-gradient(ellipse at 30% 20%, #000, transparent 70%);
+        mask-image: radial-gradient(ellipse at 30% 20%, #000, transparent 70%);
+    }
+
+    /* Thin green line glowing under the black nav */
+    .nav-glow { position: relative; }
+    .nav-glow::after {
+        content: '';
+        position: absolute;
+        left: 0; right: 0; bottom: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(118, 185, 0, 0.9) 30%, rgba(20, 184, 166, 0.7) 70%, transparent);
+        opacity: 0.7;
+    }
+
+    /* Primary action: green gradient with a soft glow */
+    .btn-brand {
+        background-image: linear-gradient(135deg, #a3e635 0%, #76b900 45%, #5a8d00 100%);
+        color: #000;
+        box-shadow: 0 8px 20px -10px rgba(118, 185, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+        transition: filter 0.15s, box-shadow 0.15s, transform 0.15s;
+    }
+    .btn-brand:hover:not(:disabled) { filter: brightness(1.05) saturate(1.1); box-shadow: 0 10px 24px -10px rgba(118, 185, 0, 1), inset 0 1px 0 rgba(255, 255, 255, 0.4); }
+    .btn-brand:active:not(:disabled) { transform: translateY(1px); }
+    .btn-brand:disabled { background-image: none; background-color: #f2f2f2; color: #757575; box-shadow: none; }
+
+    /* Secondary dark action */
+    .btn-ink {
+        background-image: linear-gradient(180deg, #2a2a2a, #000);
+        color: #fff;
+        box-shadow: 0 6px 16px -10px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        transition: filter 0.15s;
+    }
+    .btn-ink:hover:not(:disabled) { filter: brightness(1.25); }
+    .btn-ink:disabled { background-image: none; background-color: #f2f2f2; color: #757575; box-shadow: none; }
+
+    /* PromptLab mark: dark tile with a glowing green square */
+    .brand-tile {
+        background-image: linear-gradient(145deg, #2b2b2b, #000 70%);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 6px 16px -8px rgba(0, 0, 0, 0.6);
+    }
+    .brand-dot {
+        background-image: linear-gradient(135deg, #bef264, #76b900 60%, #3f8500);
+        box-shadow: 0 0 12px rgba(118, 185, 0, 0.75);
+    }
+
+    /* Headline with an ink-to-green gradient */
+    .text-gradient {
+        background-image: linear-gradient(100deg, #000 20%, #3f8500 70%, #0f766e);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    .text-gradient-light {
+        background-image: linear-gradient(100deg, #fff 30%, #bef264 70%, #5eead4);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    /* User bubble: deep ink gradient */
+    .bubble-user {
+        background-image: linear-gradient(135deg, #2a2a2a 0%, #0a0a0a 100%);
+        color: #fff;
+        box-shadow: 0 8px 20px -14px rgba(0, 0, 0, 0.9);
+    }
+
+    /* Card whose 1px border turns into a gradient on hover/focus (suggestions, composer) */
+    .gradient-border {
+        border: 1px solid transparent;
+        background:
+            linear-gradient(#fff, #fff) padding-box,
+            linear-gradient(135deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12)) border-box;
+        transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+    }
+    .gradient-border:hover, .gradient-border:focus-within {
+        background:
+            linear-gradient(#fff, #fff) padding-box,
+            linear-gradient(135deg, #76b900, #14b8a6 60%, rgba(0, 0, 0, 0.15)) border-box;
+    }
+    .glass {
+        background-color: rgba(255, 255, 255, 0.82);
+        -webkit-backdrop-filter: blur(14px) saturate(1.4);
+        backdrop-filter: blur(14px) saturate(1.4);
+    }
+    .glass.gradient-border {
+        background:
+            linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)) padding-box,
+            linear-gradient(135deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12)) border-box;
+    }
+    .glass.gradient-border:focus-within {
+        background:
+            linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95)) padding-box,
+            linear-gradient(135deg, #76b900, #14b8a6 60%, rgba(0, 0, 0, 0.2)) border-box;
+        box-shadow: 0 12px 32px -12px rgba(63, 133, 0, 0.35);
+    }
+    .glass.gradient-border.is-invalid {
+        background:
+            linear-gradient(#fff, #fff) padding-box,
+            linear-gradient(135deg, #e52020, #e52020) border-box;
+    }
+    .lift:hover { transform: translateY(-2px); box-shadow: 0 14px 28px -18px rgba(0, 0, 0, 0.45); }
+
+    /* Active sidebar item: white card with a gradient bar on the left */
+    .item-active { position: relative; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05); }
+    .item-active::before {
+        content: '';
+        position: absolute;
+        left: 0; top: 8px; bottom: 8px;
+        width: 3px;
+        border-radius: 9999px;
+        background-image: linear-gradient(180deg, #a3e635, #14b8a6);
+    }
+
+    /* Progress bar fill: gradient, with a moving shine while a scan runs */
+    .progress-fill { background-image: linear-gradient(90deg, #76b900, #14b8a6); }
+    .progress-fill.is-running {
+        background-image:
+            linear-gradient(110deg, transparent 25%, rgba(255, 255, 255, 0.55) 50%, transparent 75%),
+            linear-gradient(90deg, #76b900, #14b8a6);
+        background-size: 200% 100%, 100% 100%;
+        animation: shine 1.4s linear infinite;
+    }
+    @keyframes shine { from { background-position: 200% 0, 0 0; } to { background-position: -200% 0, 0 0; } }
+
+    /* New bubbles slide in */
+    .msg-in { animation: msg-in 0.35s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+    @keyframes msg-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    /* Glow behind the empty-state logo */
+    .halo { position: relative; }
+    .halo::before {
+        content: '';
+        position: absolute;
+        inset: -18px;
+        border-radius: 9999px;
+        background: radial-gradient(circle, rgba(118, 185, 0, 0.35), transparent 65%);
+        filter: blur(6px);
+        z-index: -1;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .msg-in, .progress-fill.is-running { animation: none; }
+        .lift:hover { transform: none; }
+    }
+
     /* AI answers rendered from Markdown (App\Support\Markdown) */
     .prose-chat { color: #1a1a1a; font-size: 15px; line-height: 1.75; overflow-wrap: anywhere; }
     .prose-chat > :first-child { margin-top: 0; }
@@ -67,11 +241,12 @@
     .prose-chat th { background: #f7f7f7; font-weight: 600; }
 
     /* Header bar above each code block in a chat answer (added by x-highlight) */
+    .prose-chat .code-head + pre { box-shadow: 0 16px 32px -24px rgba(0, 0, 0, 0.8); }
     .code-head {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        background: #262626;
+        background: linear-gradient(180deg, #2c2c2c, #222);
         color: rgba(255, 255, 255, 0.7);
         border-radius: 8px 8px 0 0;
         padding: 0.35rem 0.5rem 0.35rem 1rem;

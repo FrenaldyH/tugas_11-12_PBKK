@@ -138,6 +138,40 @@
 
         footer { background: var(--surface-dark); color: var(--on-dark-mute); font-size: 12px; padding: 24px 0; }
         @media (max-width: 640px) { .wrap { padding: 0 16px; } .nav .bar { padding: 0 16px; } .nav-user span, .nav-links a:not([aria-current]) { display: none; } }
+        /* ---- Visual layer shared with the workspace: soft aurora, glowing nav line, gradient buttons ---- */
+        body { background:
+            radial-gradient(48rem 22rem at 50% -6%, rgba(118,185,0,.12), transparent 70%),
+            radial-gradient(30rem 18rem at 100% 0%, rgba(20,184,166,.08), transparent 70%), #fff; }
+        .nav { position: relative; }
+        .nav::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; opacity: .7;
+                      background: linear-gradient(90deg, transparent, rgba(118,185,0,.9) 30%, rgba(20,184,166,.7) 70%, transparent); }
+        .brand::before { border-radius: 3px; background: linear-gradient(135deg, #bef264, #76b900 60%, #3f8500);
+                         box-shadow: 0 0 12px rgba(118,185,0,.75); }
+        .crumb { background: transparent; border-bottom: 1px solid rgba(0,0,0,.06); }
+        .btn { border-radius: 10px; }
+        .btn-primary { background: linear-gradient(135deg, #a3e635 0%, #76b900 45%, #5a8d00 100%);
+                       box-shadow: 0 8px 20px -10px rgba(118,185,0,.9), inset 0 1px 0 rgba(255,255,255,.35); }
+        .btn-primary:hover, .btn-primary:active { background: linear-gradient(135deg, #a3e635 0%, #76b900 45%, #5a8d00 100%); filter: brightness(1.05) saturate(1.1); }
+        .btn-primary:disabled { background: var(--surface-soft); box-shadow: none; filter: none; }
+        .btn-outline { border: 1px solid rgba(0,0,0,.15); background: rgba(255,255,255,.8); }
+        .btn-outline:hover { border-color: transparent;
+                             background: linear-gradient(#fff,#fff) padding-box, linear-gradient(135deg,#76b900,#14b8a6) border-box; }
+        .btn-dark { border-radius: 10px; border-color: rgba(255,255,255,.3); }
+        .card { border-radius: 16px; border-color: rgba(0,0,0,.08); background: rgba(255,255,255,.88);
+                box-shadow: 0 18px 40px -28px rgba(0,0,0,.45); }
+        .card::before { display: none; }
+        .card h2 { letter-spacing: -.01em; }
+        .tab { border-radius: 10px; border-color: rgba(0,0,0,.15); }
+        .tab[aria-pressed="true"] { background: linear-gradient(180deg, #2a2a2a, #000); border-color: transparent; }
+        .input { border-radius: 10px; border-color: rgba(0,0,0,.15); }
+        textarea { border-radius: 12px; }
+        .panel { border-radius: 12px; background: linear-gradient(180deg, #1b1b1b, #0e0e0e); }
+        .token-bar { border-radius: 14px; background: linear-gradient(135deg, rgba(163,230,53,.12), rgba(20,184,166,.08));
+                     border: 1px solid rgba(63,133,0,.15); }
+        .dot.ok { box-shadow: 0 0 10px rgba(118,185,0,.8); }
+        th { background: #f7f8f4; }
+        dialog { border-radius: 16px; }
+        footer { background: linear-gradient(180deg, #0b0b0b, #000); }
     </style>
 </head>
 <body>

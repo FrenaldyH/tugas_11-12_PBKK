@@ -1,8 +1,10 @@
 @php use App\Support\Markdown; @endphp
 
-<div class="flex-1 min-h-0 flex flex-col">
+<div class="relative flex-1 min-h-0 flex flex-col bg-aurora">
+    <div class="dot-grid pointer-events-none absolute inset-x-0 top-0 h-[28rem]" aria-hidden="true"></div>
+
     {{-- Header --}}
-    <header class="h-14 shrink-0 flex items-center gap-2 px-3 sm:px-5 border-b border-black/5">
+    <header class="glass relative z-10 h-14 shrink-0 flex items-center gap-2 px-3 sm:px-5 border-b border-black/5">
         <button type="button" x-on:click="$store.ui.sidebar = true"
                 class="lg:hidden grid h-9 w-9 place-items-center rounded-lg text-body hover:bg-soft" aria-label="Buka riwayat percakapan">
             <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M2 4.75A.75.75 0 0 1 2.75 4h14.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 4.75ZM2 10a.75.75 0 0 1 .75-.75h14.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 10Zm0 5.25a.75.75 0 0 1 .75-.75h14.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Z" clip-rule="evenodd" /></svg>
@@ -25,22 +27,24 @@
     </header>
 
     {{-- Messages. role="log" + aria-live lets screen readers announce new answers --}}
-    <div x-data x-autoscroll class="flex-1 min-h-0 overflow-y-auto scroll-thin" role="log" aria-live="polite">
+    <div x-data x-autoscroll class="relative flex-1 min-h-0 overflow-y-auto scroll-thin" role="log" aria-live="polite">
         <div class="mx-auto w-full max-w-3xl px-4 sm:px-6 py-8">
             @if ($this->bubbles->isEmpty() && ! $waiting)
                 <div class="pt-[8vh] text-center">
-                    <span class="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-black" aria-hidden="true">
-                        <span class="h-4 w-4 bg-brand"></span>
+                    <span class="halo isolate mx-auto grid h-14 w-14 place-items-center rounded-2xl brand-tile" aria-hidden="true">
+                        <span class="brand-dot h-5 w-5 rounded-[4px]"></span>
                     </span>
-                    <h2 class="mt-5 text-2xl font-semibold tracking-tight text-ink">Mulai dari satu instruksi.</h2>
+                    <h2 class="mt-6 text-3xl font-semibold tracking-tight text-ink">Mulai dari <span class="text-gradient">satu instruksi.</span></h2>
                     <p class="mt-2 text-[15px] text-mute max-w-md mx-auto">
                         Jawaban mengalir kata demi kata, kode tampil berwarna di panel Kode, dan semua pesan tersimpan di akun Anda.
                     </p>
                     <div class="mt-8 grid gap-3 sm:grid-cols-2 text-left">
                         @foreach ($suggestions as $suggestion)
                             <button type="button" wire:click="usePrompt(@js($suggestion['prompt']))"
-                                    class="group rounded-xl border border-black/10 px-4 py-3.5 hover:border-black/25 hover:bg-soft transition">
-                                <span class="block text-sm font-medium text-ink">{{ $suggestion['title'] }}</span>
+                                    class="gradient-border lift group rounded-xl px-4 py-3.5">
+                                <span class="flex items-center gap-2 text-sm font-semibold text-ink">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-gradient-to-br from-lime-400 to-teal-500" aria-hidden="true"></span>{{ $suggestion['title'] }}
+                                </span>
                                 <span class="mt-0.5 block text-sm text-mute line-clamp-2">{{ $suggestion['prompt'] }}</span>
                             </button>
                         @endforeach
@@ -51,12 +55,12 @@
             <div class="space-y-8">
                 @foreach ($this->bubbles as $message)
                     @if ($message->role === 'user')
-                        <div wire:key="msg-{{ $message->id }}" class="flex justify-end">
-                            <div class="max-w-[85%] sm:max-w-[75%] rounded-2xl rounded-br-md bg-soft border border-black/5 px-4 py-2.5 text-[15px] leading-relaxed text-ink whitespace-pre-wrap break-words">{{ $message->content }}</div>
+                        <div wire:key="msg-{{ $message->id }}" class="msg-in flex justify-end">
+                            <div class="bubble-user max-w-[85%] sm:max-w-[75%] rounded-2xl rounded-br-md px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap break-words">{{ $message->content }}</div>
                         </div>
                     @else
                         @php $failed = $message->status === 'failed'; @endphp
-                        <div wire:key="msg-{{ $message->id }}" class="flex gap-3.5">
+                        <div wire:key="msg-{{ $message->id }}" class="msg-in flex gap-3.5">
                             <x-ai-avatar :failed="$failed" />
                             <div class="min-w-0 flex-1">
                                 @if ($failed)
@@ -93,7 +97,7 @@
 
                 {{-- Answer streaming in (Challenge 1). answer() fills the two wire:stream targets piece by piece --}}
                 @if ($waiting)
-                    <div wire:key="waiting-{{ $conversationId }}" class="flex gap-3.5">
+                    <div wire:key="waiting-{{ $conversationId }}" class="msg-in flex gap-3.5">
                         <x-ai-avatar pulse />
                         <div class="min-w-0 flex-1">
                             <p x-data="{ s: 0, t: null, init() { this.t = setInterval(() => this.s++, 1000) }, destroy() { clearInterval(this.t) } }"
@@ -113,12 +117,11 @@
     </div>
 
     {{-- Composer --}}
-    <div class="shrink-0 px-3 sm:px-6 pb-4 pt-2">
+    <div class="relative shrink-0 px-3 sm:px-6 pb-4 pt-2">
         <form wire:submit="send" class="mx-auto w-full max-w-3xl">
             <div @class([
-                'rounded-2xl border bg-white shadow-[0_2px_12px_rgba(0,0,0,0.06)] transition focus-within:shadow-[0_2px_16px_rgba(0,0,0,0.09)]',
-                'border-black/15 focus-within:border-black/30' => ! $errors->has('prompt'),
-                'border-danger' => $errors->has('prompt'),
+                'glass gradient-border rounded-2xl shadow-[0_10px_30px_-16px_rgba(0,0,0,0.35)]',
+                'is-invalid' => $errors->has('prompt'),
             ])>
                 <label for="prompt" class="sr-only">Prompt</label>
                 <textarea id="prompt" rows="1" wire:model.live.debounce.400ms="prompt" x-data x-autogrow
@@ -131,7 +134,7 @@
                     <label for="theme" class="sr-only">Agent</label>
                     <div class="relative">
                         <select id="theme" wire:model.live="theme" @disabled($waiting)
-                                class="h-8 pl-3 pr-8 py-0 rounded-lg border-black/10 bg-soft text-xs font-medium text-body focus:border-brand-dark focus:ring-brand-dark disabled:opacity-60">
+                                class="h-8 pl-3 pr-8 py-0 rounded-lg border-black/10 bg-white/70 text-xs font-medium text-body focus:border-brand-dark focus:ring-brand-dark disabled:opacity-60">
                             @foreach ($themes as $key => $label)
                                 <option value="{{ $key }}">Agent: {{ $label }}</option>
                             @endforeach
@@ -147,8 +150,7 @@
                     {{-- Locked twice: wire:loading disables it during any request of send/answer, and $waiting keeps it
                          disabled server-side for the whole answer, so a double click can never send twice --}}
                     <button type="submit" wire:loading.attr="disabled" wire:target="send,answer" @disabled($waiting)
-                            class="h-9 inline-flex items-center gap-2 rounded-xl bg-brand px-3.5 text-sm font-semibold text-black hover:bg-brand-dark transition
-                                   disabled:bg-soft disabled:text-mute disabled:cursor-not-allowed">
+                            class="btn-brand h-9 inline-flex items-center gap-2 rounded-xl px-3.5 text-sm font-semibold disabled:cursor-not-allowed">
                         @if ($waiting)
                             <x-spinner /> <span>AI sedang menjawab…</span>
                         @else
