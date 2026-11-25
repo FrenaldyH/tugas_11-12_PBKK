@@ -1,24 +1,123 @@
-# PromptLab API Hub — Tugas 11 PBKK: Secure LLM Chat API Hub
+# PromptLab — Tugas 11 & 12 PBKK: Secure LLM API Hub + Livewire Agentic AI Workspace
 
-Backend API terproteksi untuk **PromptLab**, final project platform Agentic AI **Kelompok 1** ("Local-first Agentic
-Prompt, Context & Memory Optimization"). Laravel menerima prompt, meneruskannya ke LLM
-**Ollama lokal** (dengan fallback otomatis ke **Senopati AI ITS** bila Ollama mati), mencatat riwayatnya ke database, dan mengembalikan JSON
-yang dibungkus API Resource. Semua endpoint chat dikunci token **Laravel Sanctum**. Antarmuka Livewire menyusul di
-Pertemuan 12; untuk sekarang tersedia halaman **playground** di `/` untuk demo (desain: [`notes/DESIGN.md`](notes/DESIGN.md)).
+**PromptLab** adalah final project platform Agentic AI **Kelompok 1** ("Local-first Agentic Prompt, Context & Memory
+Optimization"). Repositori ini berisi dua tahap:
 
-## Ketentuan tugas dan implementasinya
+- **Pertemuan 12 — Secure & Reactive AI Chat Hub (Livewire).** Workspace split-panel di `/workspace`: daftar
+  percakapan, chat box dengan jawaban AI yang mengalir kata demi kata, panel kode dengan pewarnaan sintaks, dan monitor
+  scan file latar belakang. Login sesi lewat **Breeze**, riwayat tersimpan di **MySQL** (model `ChatMessage`).
+- **Pertemuan 11 — Secure LLM Chat API Hub.** API JSON terproteksi token **Sanctum** (`/api/chat-ai`), dengan playground
+  di `/playground`. Lihat [API Contract](#api-contract).
+
+Keduanya memakai service yang sama ([`LlmClient`](app/Services/LlmClient.php)): **Ollama lokal** sebagai provider utama
+dan **Senopati AI ITS** sebagai fallback otomatis. Desain antarmuka: [`notes/DESIGN.md`](notes/DESIGN.md).
+
+![Workspace PromptLab](docs/screenshots/workspace.png)
+
+## Pertemuan 12: ketentuan tugas dan implementasinya
 
 | Ketentuan | Implementasi |
 |---|---|
-| `POST /api/chat-ai` dikunci `auth:sanctum` | [`routes/api.php`](routes/api.php) |
-| FormRequest: prompt string, maks 1000 karakter | [`ChatAiRequest`](app/Http/Requests/ChatAiRequest.php) |
-| Log DB: user, prompt, jawaban, model, token | tabel `chat_logs` ([migrasi](database/migrations/2026_11_10_210214_create_chat_logs_table.php), [model](app/Models/ChatLog.php)) |
-| Respons JSON dibungkus API Resource | [`ChatLogResource`](app/Http/Resources/ChatLogResource.php) |
-| Terhubung ke Senopati AI ITS | [`LlmClient`](app/Services/LlmClient.php), konfigurasi di [`config/llm.php`](config/llm.php) |
-| Challenge 1: streaming SSE | `POST /api/chat-ai/stream` |
-| Challenge 2: system prompt per tema | `theme`: `default`, `prompt_engineer`, `context_engineer`, `evaluator` (lihat [Tema agent](#tema-agent-promptlab)) |
-| Challenge 3: fallback otomatis | Ollama lokal → Senopati AI ITS (`LLM_PROVIDER_ORDER`); jalur percobaan tampil di respons (`attempts`) dan di playground (lihat [Alur fallback](#alur-fallback-challenge-3)) |
-| `.env` & `vendor/` tidak ikut Git | `.gitignore` bawaan Laravel |
+| 1. Minimal 2 komponen Livewire yang berinteraksi lewat Events | 4 komponen: [`ConversationSidebar`](app/Livewire/ConversationSidebar.php), [`ChatBox`](app/Livewire/ChatBox.php), [`CodePanel`](app/Livewire/CodePanel.php), [`ScanMonitor`](app/Livewire/ScanMonitor.php). Berkomunikasi hanya lewat `$this->dispatch()` / `$dispatch()` dan listener `#[On]` (lihat [Alur Livewire](#alur-livewire)) |
+| 2. Panel hanya untuk user login (Breeze), state terikat `user_id` | Rute `/workspace` di middleware `auth`; login/register/profil dari Breeze. Semua query lewat relasi user yang login ([`OwnsConversations`](app/Livewire/Concerns/OwnsConversations.php)), jadi id milik orang lain → 404. Properti id ditandai `#[Locked]` agar tidak bisa diubah dari browser |
+| 3. `wire:loading` pada tombol submit, cegah klik ganda | Tombol kirim: `wire:loading.attr="disabled"` + `@disabled($waiting)` selama AI menjawab, plus pengaman di server (`send()` diabaikan saat `$waiting`) |
+| 4. Prompt & respons AI tersimpan berurutan di MySQL, model `ChatMessage` | Tabel `conversations` + `chat_messages` ([migrasi](database/migrations/2026_11_26_090100_create_chat_messages_table.php), [`ChatMessage`](app/Models/ChatMessage.php)). Pesan user disimpan **sebelum** LLM dipanggil; jawaban (berhasil maupun gagal) disimpan setelahnya |
+| Validasi `$rules` + pesan bahasa Indonesia | `rules()` / `messages()` di `ChatBox`: wajib, min 3, maks 1000 karakter |
+| Lifecycle hooks | `mount()` membuka percakapan terakhir setelah refresh; `updatedPrompt()` memperbarui sisa karakter dan memvalidasi saat mengetik; `updatedTheme()` menyimpan tema ke percakapan |
+| **Challenge 1:** animasi pengetikan bertahap | Streaming sungguhan, bukan simulasi: `answer()` membaca SSE dari LLM dan meneruskan tiap potongan ke browser dengan `$this->stream()` → `wire:stream="answer"`, lengkap dengan caret berkedip |
+| **Challenge 2:** split-panel code visualizer + syntax highlighting | `CodePanel` mendeteksi blok kode berpagar (```` ```php ... ``` ````) di jawaban, satu tab per blok, diwarnai **highlight.js**, ada tombol salin; blok kode di dalam bubble chat juga diwarnai |
+| **Challenge 3:** `wire:poll` + progress bar | `ScanMonitor` menjalankan job queue [`ScanWorkspaceFiles`](app/Jobs/ScanWorkspaceFiles.php): hash SHA-256 tiap file, cari kredensial yang ditulis langsung di kode, dan bandingkan dengan scan sebelumnya. `wire:poll.1s` hanya dipasang selama scan berjalan |
+| `.env` dan `vendor/` tidak ikut Git | `.gitignore` |
+
+Tambahan: pencarian percakapan (`wire:model.live.debounce`), hapus percakapan (`wire:confirm`), tema agent per
+percakapan, 10 pesan terakhir dikirim ke model sebagai konteks (chat multi-turn), batas 20 pesan/menit per user, dan
+tombol "Tanyakan temuan ini ke AI" yang mengirim hasil scan ke chat box lewat event.
+
+### Tangkapan layar
+
+| Jawaban mengalir (Challenge 1) | Selesai: kode berwarna + hasil scan (Challenge 2 & 3) |
+|---|---|
+| ![Streaming](docs/screenshots/streaming.png) | ![Scan selesai](docs/screenshots/scan-selesai.png) |
+
+| Login (Breeze) | Mobile |
+|---|---|
+| ![Login](docs/screenshots/login.png) | ![Mobile](docs/screenshots/mobile.png) |
+
+> Tangkapan layar diambil dengan server LLM uji lokal yang meniru format streaming Ollama, karena Ollama dan Senopati
+> tidak terjangkau dari mesin pengambil gambar. Alur Livewire, database, dan tampilan yang terlihat adalah aplikasi asli.
+
+## Alur Livewire
+
+Halaman `/workspace` ([`workspace.blade.php`](resources/views/workspace.blade.php)) berisi empat komponen terpisah.
+Tidak ada komponen yang memanggil komponen lain secara langsung; semuanya lewat event.
+
+```mermaid
+flowchart LR
+    S["ConversationSidebar<br/>(daftar percakapan)"]
+    C["ChatBox<br/>(bubble + prompt)"]
+    K["CodePanel<br/>(highlight.js)"]
+    M["ScanMonitor<br/>(wire:poll)"]
+    DB[("MySQL<br/>conversations<br/>chat_messages<br/>scan_runs")]
+    LLM["LlmClient<br/>Ollama → Senopati"]
+    Q["Queue worker<br/>ScanWorkspaceFiles"]
+
+    S -- "conversation-selected {id}" --> C
+    S -- "conversation-selected {id}" --> K
+    C -- "conversation-saved {id}" --> S
+    C -- "answer-saved {id}" --> K
+    C -- "show-code {id}" --> K
+    M -- "use-prompt {text}" --> C
+    C <--> DB
+    C -- "stream()" --> LLM
+    M -- "dispatch job" --> Q
+    Q -- "progres tiap file" --> DB
+    M -- "wire:poll.1s" --> DB
+```
+
+**Satu kali kirim prompt = dua request Livewire**, supaya bubble user langsung tampil sebelum AI selesai berpikir:
+
+```mermaid
+sequenceDiagram
+    actor U as User
+    participant B as Browser (Livewire JS)
+    participant C as ChatBox (PHP)
+    participant DB as MySQL
+    participant L as LlmClient
+
+    U->>B: Enter / klik Kirim
+    B->>C: request 1: send()
+    C->>C: validate() + rate limit
+    C->>DB: simpan Conversation + ChatMessage(role=user)
+    C-->>B: bubble user + bubble "menunggu", tombol disabled, event conversation-saved
+    B->>C: request 2: answer() (dipicu $this->js)
+    C->>L: stream(system prompt tema + 10 pesan terakhir)
+    loop tiap potongan jawaban
+        L-->>C: token
+        C-->>B: $this->stream(e(token)) ke wire:stream="answer"
+    end
+    C->>DB: simpan ChatMessage(role=assistant, provider, model, token)
+    C-->>B: bubble final (Markdown aman) + event answer-saved ke CodePanel
+```
+
+Catatan keamanan:
+- Potongan stream di-escape dengan `e()` karena `wire:stream` menyisipkan HTML. Jawaban yang tersimpan dirender dari
+  Markdown dengan `html_input: escape` ([`Markdown`](app/Support/Markdown.php)), jadi `<script>` dari model tampil
+  sebagai teks biasa.
+- Scanner hanya membaca folder tetap di [`config/scan.php`](config/scan.php). User tidak pernah mengirim path atau
+  perintah shell, sehingga tidak ada celah *command injection* maupun *path traversal*.
+- Kalau Ollama dan Senopati sama-sama gagal, jawaban disimpan dengan status `failed` dan bubble merah menjelaskan
+  gangguannya; aplikasi tidak crash.
+
+### Pemetaan rubrik Pertemuan 12
+
+| Kriteria (bobot) | Bukti |
+|---|---|
+| Desain & UI chat (30%) | Split-panel 3 kolom (sidebar / chat / kode + scan), bubble kontras hitam-putih, responsif sampai 390 px tanpa scroll horizontal, mengikuti `notes/DESIGN.md` |
+| Proteksi UX loading (20%) | `wire:loading.attr="disabled"` + `@disabled($waiting)` + guard server; test `test_second_send_while_waiting_is_ignored` |
+| Integritas DB & riwayat (20%) | `conversations` / `chat_messages` terikat `user_id`; test `test_conversations_of_another_user_cannot_be_opened`, `test_conversation_id_cannot_be_changed_from_the_browser` |
+| Konektivitas API LLM (10%) | Streaming + fallback Ollama → Senopati dalam `try/catch`; test `test_falls_back_to_senopati_when_ollama_is_down`, `test_both_providers_down_saves_failed_answer_without_crashing` |
+| Eksplorasi challenge A+ (10%) | Ketiga challenge dikerjakan dan diuji (lihat tabel di atas) |
+| PSR-12 & demo (10%) | `./vendor/bin/pint --test` lulus; 56 test lulus |
 
 ## Instalasi
 
@@ -26,23 +125,50 @@ Pertemuan 12; untuk sekarang tersedia halaman **playground** di `/` untuk demo (
 
 ```bash
 composer install
+npm install
 php -r "file_exists('.env') || copy('.env.example', '.env');"   # hanya menyalin bila .env belum ada
 php artisan key:generate
-touch database/database.sqlite
-php artisan migrate --seed        # membuat akun demo
 ```
 
-Lalu isi `.env` (token Senopati, `OLLAMA_MODEL`; lihat di bawah).
+Buat database MySQL (lewat phpMyAdmin/XAMPP atau `mysql -u root -p`):
 
-**Setiap kali menjalankan:**
+```sql
+CREATE DATABASE promptlab CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+Isi koneksinya di `.env`:
+
+```dotenv
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=promptlab
+DB_USERNAME=root
+DB_PASSWORD=password-mysql-anda
+```
+
+Lalu:
 
 ```bash
-php artisan serve                 # http://127.0.0.1:8000
+php artisan migrate --seed        # semua tabel + akun demo
+npm run build                     # CSS/JS (Tailwind, highlight.js)
 ```
+
+Isi juga token Senopati dan `OLLAMA_MODEL` di `.env` (lihat di bawah).
+
+**Setiap kali menjalankan** (dua terminal):
+
+```bash
+php artisan serve                 # http://127.0.0.1:8000 → login → /workspace
+php artisan queue:work            # wajib untuk fitur "Scan workspace" (Challenge 3)
+```
+
+Atau satu perintah: `composer run dev` (server, queue, log, dan Vite sekaligus).
 
 > **Jangan** menjalankan `cp .env.example .env` setelah `.env` diisi. `.env.example` sengaja berisi
 > nilai kosong karena ikut Git, jadi perintah itu menimpa token dan `OLLAMA_MODEL` Anda. Setelah `git pull`, cukup
-> `composer install` (bila ada paket baru) dan `php artisan migrate`. Variabel baru di `.env.example` disalin manual.
+> `composer install` / `npm install` (bila ada paket baru), `php artisan migrate`, dan `npm run build`. Variabel baru
+> di `.env.example` disalin manual.
 
 **Provider utama: Ollama lokal (Challenge 3).** Jalankan Ollama dan isi `OLLAMA_MODEL` dengan model dari `ollama list`
 (model 7B kuantisasi Q4 muat di GPU 6 GB):
@@ -89,6 +215,8 @@ Akun demo: `demo@promptlab.test` / `password`.
 | `OLLAMA_BASE_URL` | `http://localhost:11434/v1` | endpoint OpenAI-compatible bawaan Ollama |
 | `OLLAMA_MODEL` | `qwen3:14b` | **harus** model yang ada di `ollama list` (mis. `deephat:latest`) |
 | `SANCTUM_EXPIRATION` | `1440` | umur token (menit) |
+| `DB_CONNECTION` … `DB_PASSWORD` | `mysql`, `promptlab` | database MySQL untuk riwayat chat workspace |
+| `SCAN_DELAY_MS` | `120` | jeda per file saat scan agar progress bar terlihat; `0` = secepatnya |
 
 **Kalau `/api/chat-ai` menjawab 503**, berarti Ollama **dan** Senopati sama-sama gagal. Lihat `attempts` di respons
 (atau "Jalur provider" di playground) dan `storage/logs/laravel.log`:
@@ -240,7 +368,7 @@ daftar yang sama, jadi ikut berubah otomatis.
 | `prompt_tokens` / `completion_tokens` / `total_tokens` | unsigned int, nullable | dari field `usage` LLM |
 | `created_at` / `updated_at` | timestamp | indeks `(user_id, created_at)` untuk riwayat |
 
-## Alur fallback (Challenge 3)
+## Alur fallback (Challenge 3 Pertemuan 11)
 
 1. Coba provider pertama (`ollama`, lokal). Koneksi putus atau HTTP 5xx → ulangi sampai `LLM_RETRIES` kali (jeda 200 ms).
    - Error 4xx (mis. token salah) **tidak** diulang karena hasilnya akan sama.
@@ -264,16 +392,50 @@ terbalik (Senopati → Ollama): gateway Senopati menggantung, dan setelah 60 det
 (`SENOPATI GAGAL: TIMEOUT 60 S → OLLAMA BERHASIL`). Kode fallback tidak bergantung pada urutan provider, jadi perilaku
 yang sama berlaku untuk urutan Ollama → Senopati sekarang.
 
+## Skema workspace (Pertemuan 12)
+
+| Tabel | Kolom penting | Catatan |
+|---|---|---|
+| `conversations` | `user_id`, `title`, `theme`, `updated_at` | satu baris = satu item di sidebar; indeks `(user_id, updated_at)` |
+| `chat_messages` | `conversation_id`, `user_id`, `role` (`user`/`assistant`), `content`, `status`, `provider`, `model`, `total_tokens` | urutan = `id` auto-increment; `user_id` ikut disimpan agar setiap query bisa dibatasi ke pemiliknya; `cascadeOnDelete` dari percakapan dan user |
+| `scan_runs` | `user_id`, `status`, `total`, `processed`, `current_file`, `hashes` (JSON), `findings` (JSON), `changed` (JSON) | ditulis job queue setiap selesai satu file, dibaca `ScanMonitor` lewat `wire:poll` |
+
+Tabel `chat_logs` (Pertemuan 11) tetap dipakai oleh API `/api/chat-ai`.
+
 ## Test dan standar kode
 
 ```bash
-php artisan test          # 18 test: auth, validasi, log DB, tema, think, fallback + simulasi, timeout/401 tidak di-retry, 503, SSE, riwayat
+php artisan test          # 56 test
 ./vendor/bin/pint --test  # PSR-12 (pint.json)
 ```
 
-LLM dipalsukan dengan `Http::fake()`, jadi test tidak butuh token Senopati maupun internet.
+- [`tests/Feature/WorkspaceTest.php`](tests/Feature/WorkspaceTest.php) (Pertemuan 12): guest diarahkan ke login,
+  keempat komponen tampil, kirim → bubble user tersimpan sebelum LLM dipanggil → jawaban di-stream ter-escape dan
+  tersimpan, konteks multi-turn, validasi + penghitung karakter, klik ganda diabaikan, fallback Ollama → Senopati,
+  semua provider mati tanpa crash, percakapan user lain → 404, properti `#[Locked]`, event antar komponen, panel kode,
+  `wire:poll` hanya saat scan aktif, job scan (hash, temuan, perubahan file).
+- [`tests/Feature/ChatAiApiTest.php`](tests/Feature/ChatAiApiTest.php) (Pertemuan 11): auth token, validasi, log DB,
+  tema, think, fallback, SSE, riwayat.
+- `tests/Feature/Auth/*`, `ProfileTest.php`: bawaan Breeze.
 
-## Pemetaan rubrik
+LLM dipalsukan dengan `Http::fake()`, jadi test tidak butuh Ollama, token Senopati, maupun internet. Test memakai
+SQLite in-memory (`phpunit.xml`), terpisah dari database MySQL utama.
+
+## Demo workspace (pitching 5 menit, Pertemuan 13)
+
+1. Buka `/workspace` tanpa login → diarahkan ke halaman login Breeze. Masuk dengan akun demo.
+2. Klik salah satu contoh prompt (mis. "Buatkan komponen Livewire penghitung klik…") → Enter. Tunjukkan bubble user
+   langsung muncul, tombol berubah "AI sedang menjawab…" dan terkunci, lalu jawaban mengalir kata demi kata.
+3. Panel kode kanan otomatis menampilkan blok kode berwarna, satu tab per blok; tombol **Salin**.
+4. Ganti agent ke *Prompt Engineer*, kirim prompt ambigu → jawaban mengikuti system prompt tema itu.
+5. **Percakapan baru**, lalu klik percakapan lama di sidebar → riwayat kembali dari MySQL. Refresh halaman → percakapan
+   terakhir terbuka lagi (`mount()`).
+6. Ketik lebih dari 1000 karakter → sisa karakter merah + pesan error sebelum dikirim (`updatedPrompt()`).
+7. **Mulai scan** → progress bar bergerak lewat `wire:poll.1s`; setelah selesai, tunjukkan temuan kredensial dan klik
+   "Tanyakan temuan ini ke AI" (event `use-prompt` ke chat box).
+8. Login sebagai akun kedua (register) → sidebar kosong: riwayat terikat ke `user_id`.
+
+## Pemetaan rubrik Pertemuan 11
 
 | Komponen (bobot) | Bukti |
 |---|---|
@@ -283,7 +445,7 @@ LLM dipalsukan dengan `Http::fake()`, jadi test tidak butuh token Senopati maupu
 | Challenge A+ (10%) | streaming SSE, 4 tema system prompt, fallback otomatis Ollama lokal → Senopati ITS (sesuai soal, teruji) |
 | Kerapian kode (10%) | Pint PSR-12, satu service untuk semua provider, komentar per fungsi |
 
-## Demo Postman (5 menit)
+## Demo Postman API (Pertemuan 11)
 
 1. `POST /api/chat-ai` **tanpa** token → 401.
 2. `POST /api/login` → salin `access_token` ke tab *Authorization → Bearer Token*.
