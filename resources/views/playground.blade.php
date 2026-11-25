@@ -3,9 +3,10 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>PromptLab API Hub</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Playground API · PromptLab</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=inter:400,700|jetbrains-mono:400" rel="stylesheet">
+    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700|jetbrains-mono:400" rel="stylesheet">
     <style>
         /* Design tokens from notes/DESIGN.md (NVIDIA majority, Huawei for gaps) */
         :root {
@@ -27,13 +28,30 @@
         :focus-visible { outline: 2px solid var(--primary-dark); outline-offset: 2px; }
         .wrap { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
 
-        /* Primary nav + breadcrumb (NVIDIA) */
-        .nav { background: var(--surface-dark); color: var(--on-dark); height: 64px; }
-        .nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 100%; gap: 16px; }
-        .brand { font-weight: 700; font-size: 18px; display: flex; align-items: center; gap: 8px; }
-        .brand::before { content: ""; width: 12px; height: 12px; background: var(--primary); }
+        /* Primary nav: same bar as the workspace (resources/views/layouts/navigation.blade.php) */
+        .nav { background: var(--surface-dark); color: var(--on-dark); height: 56px; }
+        .nav .bar { display: flex; align-items: center; justify-content: space-between; height: 100%; gap: 16px; padding: 0 20px; }
+        .nav-left { display: flex; align-items: center; gap: 32px; height: 100%; }
+        .brand { font-weight: 700; font-size: 17px; display: flex; align-items: center; gap: 8px; color: inherit; text-decoration: none; }
+        .brand::before { content: ""; width: 14px; height: 14px; background: var(--primary); }
+        .nav-links { display: flex; gap: 24px; height: 100%; }
+        .nav-links a { display: inline-flex; align-items: center; border-bottom: 4px solid transparent; color: var(--on-dark-mute);
+                       font: 700 14px/1 var(--font); text-decoration: none; padding-top: 4px; }
+        .nav-links a:hover { color: var(--on-dark); border-bottom-color: rgba(255,255,255,.4); }
+        .nav-links a[aria-current="page"] { color: var(--on-dark); border-bottom-color: var(--primary); }
         .nav-user { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--on-dark-mute); min-width: 0; }
         .nav-user span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .nav-user form { margin: 0; }
+        .crumb a { color: inherit; }
+        .crumb a:hover { color: var(--ink); }
+        /* Token strip: the Bearer token issued from the web session */
+        .token-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+                     margin-bottom: 24px; padding: 12px 16px; background: var(--surface-soft); border-radius: var(--r-sm); font-size: 14px; }
+        .token-bar .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+        .token-bar .btn { height: 36px; padding: 0 14px; }
+        .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--mute); margin-right: 8px; }
+        .dot.ok { background: var(--primary); }
+        .dot.bad { background: var(--error); }
         .crumb { background: var(--surface-soft); height: 48px; display: flex; align-items: center;
                  font: 700 14px/1.43 var(--font); text-transform: uppercase; color: var(--body); }
         .crumb .wrap { width: 100%; }
@@ -119,42 +137,43 @@
         .dialog-foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
 
         footer { background: var(--surface-dark); color: var(--on-dark-mute); font-size: 12px; padding: 24px 0; }
-        @media (max-width: 480px) { .wrap { padding: 0 16px; } .nav-user span { display: none; } }
+        @media (max-width: 640px) { .wrap { padding: 0 16px; } .nav .bar { padding: 0 16px; } .nav-user span, .nav-links a:not([aria-current]) { display: none; } }
     </style>
 </head>
 <body>
 <nav class="nav">
-    <div class="wrap">
-        <div class="brand">PromptLab API Hub</div>
-        <div class="nav-user" id="navUser" hidden>
-            <span id="userEmail"></span>
-            <button class="btn btn-dark" id="logoutBtn" type="button">Keluar</button>
+    <div class="bar">
+        <div class="nav-left">
+            <a class="brand" href="{{ route('workspace') }}">PromptLab</a>
+            <div class="nav-links">
+                <a href="{{ route('workspace') }}">Workspace</a>
+                <a href="{{ route('playground') }}" aria-current="page">Playground API</a>
+            </div>
+        </div>
+        <div class="nav-user">
+            <span>{{ auth()->user()->name }}</span>
+            {{-- Same session logout as the workspace (Breeze) --}}
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button class="btn btn-dark" type="submit">Keluar</button>
+            </form>
         </div>
     </div>
 </nav>
-<div class="crumb"><div class="wrap">API Hub<span class="sep">/</span>Playground</div></div>
+<div class="crumb"><div class="wrap"><a href="{{ route('workspace') }}">&larr; Workspace</a><span class="sep">/</span>Playground API</div></div>
 
 <main class="wrap">
-    {{-- Login: exchanges email/password for a Sanctum Bearer token --}}
-    <section class="card login" id="loginView">
-        <h2>Masuk untuk mendapatkan token</h2>
-        <form id="loginForm" class="stack" novalidate>
-            <div>
-                <label for="email">Email</label>
-                <input class="input" id="email" type="email" autocomplete="username" value="demo@promptlab.test" required>
-            </div>
-            <div>
-                <label for="password">Password</label>
-                <input class="input" id="password" type="password" autocomplete="current-password" required>
-                <div class="field-foot"><span class="helper">Akun demo dari seeder: password <code>password</code></span></div>
-            </div>
-            <p class="err" id="loginError" role="alert" hidden></p>
-            <button class="btn btn-primary" type="submit">Masuk</button>
-        </form>
-    </section>
+    {{-- Bearer token for the API calls below, issued from the logged-in session (PlaygroundController@token) --}}
+    <div class="token-bar" role="status">
+        <div><span class="dot" id="tokenDot"></span><span id="tokenStatus">Menyiapkan token API…</span></div>
+        <div class="actions">
+            <button class="btn btn-outline" id="showTokenBtn" type="button" disabled>Lihat token (Postman)</button>
+            <button class="btn btn-outline" id="newTokenBtn" type="button">Buat token baru</button>
+        </div>
+    </div>
 
     {{-- Chat: prompt form (left) and AI answer (right) --}}
-    <section id="chatView" hidden>
+    <section id="chatView">
         <div class="grid">
             <form class="card stack" id="chatForm" novalidate>
                 <h2>Kirim prompt</h2>
@@ -225,12 +244,12 @@
     </section>
 </main>
 
-<footer><div class="wrap">Secure LLM Chat API Hub · Tugas 11 PBKK · Kelompok 1</div></footer>
+<footer><div class="wrap">Secure LLM Chat API Hub · Tugas 11 PBKK · Kelompok 1 · Login API dengan email + password tetap tersedia di <code>POST /api/login</code> untuk Postman</div></footer>
 
 {{-- Shows the plain-text token once, like Sanctum does --}}
 <dialog id="tokenDialog">
     <h2>Token Bearer Anda</h2>
-    <p class="helper">Token hanya ditampilkan sekali. Salin untuk dipakai di Postman: <b>Authorization: Bearer &lt;token&gt;</b></p>
+    <p class="helper">Token ini milik akun yang sedang login dan berlaku sampai <b id="tokenExpiry">-</b>. Salin untuk dipakai di Postman: <b>Authorization: Bearer &lt;token&gt;</b>. "Buat token baru" mencabut token ini.</p>
     <code id="tokenText"></code>
     <div class="dialog-foot">
         <button class="btn btn-outline" id="copyBtn" type="button">Salin</button>
@@ -242,59 +261,60 @@
     // Small helpers
     const $ = (id) => document.getElementById(id);
 
-    // Per-tab token storage; storage may be blocked, so every access is guarded.
-    // Demo only: a token in sessionStorage is readable by any script on this page.
-    const store = {
-        get() { try { return sessionStorage.getItem('token'); } catch { return null; } },
-        set(v) { try { v ? sessionStorage.setItem('token', v) : sessionStorage.removeItem('token'); } catch {} },
-    };
+    // Token kept in memory only for this page; the session cookie is what keeps the user logged in
+    let token = null;
+    const csrf = document.querySelector('meta[name="csrf-token"]').content;
 
-    // fetch() wrapper that adds the Bearer token and JSON headers
-    function api(path, options = {}) {
-        const headers = { Accept: 'application/json', 'Content-Type': 'application/json' };
-        const token = store.get();
-        if (token) headers.Authorization = 'Bearer ' + token;
-        return fetch('/api' + path, { ...options, headers });
+    function setTokenStatus(state, text) {
+        $('tokenDot').className = 'dot' + (state ? ' ' + state : '');
+        $('tokenStatus').textContent = text;
+        $('showTokenBtn').disabled = state !== 'ok';
     }
 
-    // Switch between the login view and the chat view
-    function showChat(user) {
-        $('loginView').hidden = !!user;
-        $('chatView').hidden = !user;
-        $('navUser').hidden = !user;
-        $('userEmail').textContent = user ? user.email : '';
-        if (user) loadHistory();
-    }
-
-    // Restore a session from a stored token
-    async function boot() {
-        if (!store.get()) return showChat(null);
-        const res = await api('/user');
-        if (!res.ok) { store.set(null); return showChat(null); }
-        showChat(await res.json());
-    }
-
-    $('loginForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        $('loginError').hidden = true;
-        const res = await api('/login', { method: 'POST', body: JSON.stringify({
-            email: $('email').value, password: $('password').value, device_name: 'playground' }) });
-        const json = await res.json();
-        if (!res.ok) {
-            $('loginError').textContent = json.message || 'Login gagal.';
-            $('loginError').hidden = false;
-            return;
+    // Ask the web app (session cookie + CSRF) for a Bearer token of the logged-in user
+    async function issueToken() {
+        setTokenStatus(null, 'Menyiapkan token API…');
+        const res = await fetch(@json(route('playground.token')), {
+            method: 'POST',
+            headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf },
+            credentials: 'same-origin',
+        });
+        // Session ended (e.g. logged out in another tab): back to the login page
+        if (res.status === 401 || res.status === 419) {
+            location.assign(@json(route('login')));
+            return false;
         }
-        store.set(json.access_token);
-        $('tokenText').textContent = json.access_token;
-        $('tokenDialog').showModal();
-        showChat(json.user);
-    });
+        if (!res.ok) {
+            setTokenStatus('bad', 'Token gagal dibuat. Muat ulang halaman.');
+            return false;
+        }
+        const json = await res.json();
+        token = json.access_token;
+        $('tokenText').textContent = token;
+        $('tokenExpiry').textContent = json.expires_at ?? 'tidak kedaluwarsa';
+        setTokenStatus('ok', `Token Bearer aktif untuk ${json.user.email}` + (json.expires_at ? ` · berlaku sampai ${json.expires_at}` : ''));
+        return true;
+    }
 
-    $('logoutBtn').addEventListener('click', async () => {
-        await api('/logout', { method: 'POST' });
-        store.set(null);
-        showChat(null);
+    // fetch() wrapper for /api/*: adds the Bearer token; on 401 (expired/revoked token) gets a new one once
+    async function api(path, options = {}, retried = false) {
+        if (!token && !(await issueToken())) return new Response('{}', { status: 401 });
+        const headers = { Accept: 'application/json', 'Content-Type': 'application/json', Authorization: 'Bearer ' + token };
+        const res = await fetch('/api' + path, { ...options, headers });
+        if (res.status === 401 && !retried) {
+            token = null;
+            return api(path, options, true);
+        }
+        return res;
+    }
+
+    async function boot() {
+        if (await issueToken()) loadHistory();
+    }
+
+    $('showTokenBtn').addEventListener('click', () => $('tokenDialog').showModal());
+    $('newTokenBtn').addEventListener('click', async () => {
+        if (await issueToken()) $('tokenDialog').showModal();
     });
 
     $('copyBtn').addEventListener('click', () => navigator.clipboard?.writeText($('tokenText').textContent));
@@ -391,8 +411,7 @@
             $('promptError').textContent = json.errors.prompt[0];
             $('prompt').classList.add('invalid');
         } else if (res.status === 401) {
-            store.set(null);
-            showChat(null);
+            setTokenStatus('bad', 'Token tidak berlaku. Klik "Buat token baru".');
         } else {
             $('chatError').textContent = json.message || 'Terjadi kesalahan.';
             $('chatError').hidden = false;

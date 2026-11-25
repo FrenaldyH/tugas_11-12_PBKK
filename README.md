@@ -6,8 +6,14 @@ Optimization"). Repositori ini berisi dua tahap:
 - **Pertemuan 12 — Secure & Reactive AI Chat Hub (Livewire).** Workspace split-panel di `/workspace`: daftar
   percakapan, chat box dengan jawaban AI yang mengalir kata demi kata, panel kode dengan pewarnaan sintaks, dan monitor
   scan file latar belakang. Login sesi lewat **Breeze**, riwayat tersimpan di **MySQL** (model `ChatMessage`).
-- **Pertemuan 11 — Secure LLM Chat API Hub.** API JSON terproteksi token **Sanctum** (`/api/chat-ai`), dengan playground
-  di `/playground`. Lihat [API Contract](#api-contract).
+- **Pertemuan 11 — Secure LLM Chat API Hub.** API JSON terproteksi token **Sanctum** (`/api/chat-ai`), dengan halaman
+  **Playground API** di `/playground`. Lihat [API Contract](#api-contract).
+
+Workspace dan Playground API memakai **satu login yang sama** (sesi Breeze) dan saling terhubung lewat navigasi atas.
+Playground tidak meminta password lagi: token Bearer untuk memanggil `/api/*` dibuat otomatis dari sesi lewat
+`POST /playground/token` ([`PlaygroundController`](app/Http/Controllers/PlaygroundController.php)), token playground
+lama dicabut setiap kali token baru dibuat, dan tombol *Lihat token (Postman)* menampilkannya untuk dipakai di Postman.
+Login API dengan email + password (`POST /api/login`) tetap ada untuk Postman.
 
 Keduanya memakai service yang sama ([`LlmClient`](app/Services/LlmClient.php)): **Ollama lokal** sebagai provider utama
 dan **Senopati AI ITS** sebagai fallback otomatis. Desain antarmuka: [`notes/DESIGN.md`](notes/DESIGN.md).
@@ -117,7 +123,7 @@ Catatan keamanan:
 | Integritas DB & riwayat (20%) | `conversations` / `chat_messages` terikat `user_id`; test `test_conversations_of_another_user_cannot_be_opened`, `test_conversation_id_cannot_be_changed_from_the_browser` |
 | Konektivitas API LLM (10%) | Streaming + fallback Ollama → Senopati dalam `try/catch`; test `test_falls_back_to_senopati_when_ollama_is_down`, `test_both_providers_down_saves_failed_answer_without_crashing` |
 | Eksplorasi challenge A+ (10%) | Ketiga challenge dikerjakan dan diuji (lihat tabel di atas) |
-| PSR-12 & demo (10%) | `./vendor/bin/pint --test` lulus; 56 test lulus |
+| PSR-12 & demo (10%) | `./vendor/bin/pint --test` lulus; 60 test lulus |
 
 ## Instalasi
 
@@ -405,7 +411,7 @@ Tabel `chat_logs` (Pertemuan 11) tetap dipakai oleh API `/api/chat-ai`.
 ## Test dan standar kode
 
 ```bash
-php artisan test          # 56 test
+php artisan test          # 60 test
 ./vendor/bin/pint --test  # PSR-12 (pint.json)
 ```
 
@@ -416,6 +422,7 @@ php artisan test          # 56 test
   `wire:poll` hanya saat scan aktif, job scan (hash, temuan, perubahan file).
 - [`tests/Feature/ChatAiApiTest.php`](tests/Feature/ChatAiApiTest.php) (Pertemuan 11): auth token, validasi, log DB,
   tema, think, fallback, SSE, riwayat.
+- [`tests/Feature/PlaygroundTest.php`](tests/Feature/PlaygroundTest.php): playground butuh login sesi yang sama, ada tautan kembali ke workspace, token dari sesi berfungsi di API dan token lama dicabut.
 - `tests/Feature/Auth/*`, `ProfileTest.php`: bawaan Breeze.
 
 LLM dipalsukan dengan `Http::fake()`, jadi test tidak butuh Ollama, token Senopati, maupun internet. Test memakai
