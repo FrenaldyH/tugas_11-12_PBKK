@@ -37,7 +37,7 @@
                         @foreach ([
                             ['Jawaban real-time', 'Streaming dari Ollama lokal, otomatis pindah ke Senopati AI ITS bila mati.'],
                             ['Panel kode', 'Blok kode dari AI tampil berwarna, siap disalin.'],
-                            ['Scan workspace', 'Sidik jari SHA-256 dan pencarian kredensial yang bocor.'],
+                            ['Scan kode proyek', 'Sidik jari SHA-256 file kode dan pencarian kredensial yang bocor.'],
                         ] as [$title, $text])
                             <li class="flex gap-3 rounded-xl bg-white/[0.04] px-4 py-3 ring-1 ring-white/10">
                                 <span class="mt-1 h-2 w-2 shrink-0 rounded-full bg-gradient-to-br from-lime-300 to-teal-400" aria-hidden="true"></span>

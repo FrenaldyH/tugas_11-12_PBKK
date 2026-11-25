@@ -166,7 +166,7 @@ Isi juga token Senopati dan `OLLAMA_MODEL` di `.env` (lihat di bawah).
 
 ```bash
 php artisan serve                 # http://127.0.0.1:8000 → login → /workspace
-php artisan queue:work            # wajib untuk fitur "Scan workspace" (Challenge 3)
+php artisan queue:work            # wajib untuk fitur "Scan proyek" (Challenge 3)
 ```
 
 Atau satu perintah: `composer run dev` (server, queue, log, dan Vite sekaligus).

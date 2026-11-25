@@ -32,7 +32,7 @@
                aria-label="Inspector">
             <div class="h-14 shrink-0 flex items-center gap-1 px-3 border-b border-black/5">
                 <div class="flex items-center gap-1 rounded-xl bg-gradient-to-b from-[#f4f4f2] to-[#ecece8] p-1 ring-1 ring-black/5" role="tablist">
-                    @foreach (['code' => 'Kode', 'scan' => 'Scan workspace'] as $tab => $label)
+                    @foreach (['code' => 'Kode', 'scan' => 'Scan proyek'] as $tab => $label)
                         <button type="button" role="tab" x-on:click="$store.ui.tab = '{{ $tab }}'"
                                 :aria-selected="($store.ui.tab === '{{ $tab }}').toString()"
                                 :class="$store.ui.tab === '{{ $tab }}' ? 'bg-white text-ink shadow-sm' : 'text-mute hover:text-ink'"

@@ -7,11 +7,25 @@
     @endif
 
     <div>
-        <h2 class="text-[15px] font-semibold text-ink">Scan workspace</h2>
+        <h2 class="text-[15px] font-semibold text-ink">Scan kode proyek</h2>
         <p class="mt-1 text-sm text-mute">
-            Membuat sidik jari SHA-256 setiap file kode, mencari kredensial yang ditulis langsung di kode, dan membandingkan
-            dengan scan sebelumnya. Berjalan di queue, progres dipantau dengan <code class="font-mono text-xs text-body">wire:poll</code>.
+            Memeriksa <span class="font-medium text-body">kode sumber aplikasi PromptLab ini</span>, bukan isi percakapan.
+            Karena itu hasilnya sama di semua chat dan baru berubah kalau file proyeknya berubah.
         </p>
+
+        <div class="mt-3 rounded-xl bg-gradient-to-br from-[#f7f8f4] to-[#eef3ec] p-3 ring-1 ring-black/5">
+            <p class="text-xs font-medium text-body">Folder yang dipindai</p>
+            <div class="mt-2 flex flex-wrap gap-1.5">
+                @foreach (config('scan.paths') as $path)
+                    <span class="rounded-md bg-white px-2 py-0.5 font-mono text-[11px] text-ink ring-1 ring-black/10">{{ $path }}/</span>
+                @endforeach
+            </div>
+            <ul class="mt-3 space-y-1 text-xs text-mute">
+                <li><span class="font-medium text-body">Sidik jari:</span> hash SHA-256 tiap file, untuk tahu file mana yang berubah sejak scan terakhir.</li>
+                <li><span class="font-medium text-body">Kredensial bocor:</span> password, token, atau API key yang ditulis langsung di kode, bukan di <span class="font-mono">.env</span>.</li>
+                <li><span class="font-medium text-body">Cara kerja:</span> berjalan di queue worker; progresnya dipantau halaman ini dengan <span class="font-mono">wire:poll</span>.</li>
+            </ul>
+        </div>
     </div>
 
     {{-- Progress card --}}

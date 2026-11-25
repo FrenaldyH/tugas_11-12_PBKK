@@ -172,6 +172,52 @@
         th { background: #f7f8f4; }
         dialog { border-radius: 16px; }
         footer { background: linear-gradient(180deg, #0b0b0b, #000); }
+
+        /* ---- Controls, tidied up to match the workspace ---- */
+        label, .label { font-weight: 600; }
+        /* Option groups as one segmented control (like the Kode / Scan tabs in the workspace) */
+        .tabs { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; max-width: 100%;
+                background: linear-gradient(180deg, #f4f4f2, #ecece8); border-radius: 12px;
+                box-shadow: inset 0 0 0 1px rgba(0,0,0,.05); }
+        .tab { min-height: 36px; height: 36px; padding: 0 16px; border: 0; border-radius: 9px; background: transparent;
+               color: #5e5e5e; font: 600 13px/1 var(--font); transition: color .15s, background .15s, box-shadow .15s; }
+        .tab { white-space: nowrap; }
+        .btn { white-space: nowrap; }
+        .tab:hover { color: var(--ink); }
+        .tab[aria-pressed="true"] { background: #fff; color: var(--ink);
+                                    box-shadow: 0 1px 2px rgba(0,0,0,.1), 0 0 0 1px rgba(0,0,0,.04); }
+        /* The fallback test is a "danger" switch: show it in red when on */
+        [data-group="simulate"] .tab[data-value="true"][aria-pressed="true"] { color: var(--error); }
+        .helper { line-height: 1.5; }
+        .field-foot { margin-top: 6px; }
+
+        /* Inputs: one style for select and textarea */
+        .input, textarea { background: #fff; border: 1px solid rgba(0,0,0,.14); border-radius: 12px;
+                           box-shadow: inset 0 1px 2px rgba(0,0,0,.04); transition: border-color .15s, box-shadow .15s; }
+        .input:focus, textarea:focus { border: 1px solid var(--primary-dark); box-shadow: 0 0 0 3px rgba(118,185,0,.18); }
+        textarea { min-height: 120px; }
+
+        /* Send: full-width primary button at the bottom of the form */
+        #sendBtn { width: 100%; height: 46px; border-radius: 12px; font: 600 15px/1 var(--font); border: 0; }
+
+        /* Secondary buttons: compact and equal */
+        .btn-outline { height: 36px; padding: 0 14px; border-radius: 10px; font: 600 13px/1 var(--font); color: var(--ink); }
+        .token-bar { align-items: center; }
+        .token-bar .actions { gap: 8px; }
+        .btn-dark { height: 34px; padding: 0 14px; font: 600 13px/1 var(--font); border: 1px solid rgba(255,255,255,.25); }
+        .btn-dark:hover { background: rgba(255,255,255,.1); }
+
+        /* Breadcrumb: quiet, sentence case */
+        .crumb { height: 44px; font: 500 13px/1 var(--font); text-transform: none; color: var(--ink); }
+        .crumb a { color: var(--mute); text-decoration: none; }
+        .crumb a:hover { color: var(--ink); }
+
+        @media (max-width: 640px) {
+            .token-bar .actions { width: 100%; }
+            .token-bar .btn { flex: 1; }
+            .tabs { display: flex; }
+            .tab { flex: 1; padding: 0 8px; font-size: 12px; }
+        }
     </style>
 </head>
 <body>
@@ -201,7 +247,7 @@
     <div class="token-bar" role="status">
         <div><span class="dot" id="tokenDot"></span><span id="tokenStatus">Menyiapkan token API…</span></div>
         <div class="actions">
-            <button class="btn btn-outline" id="showTokenBtn" type="button" disabled>Lihat token (Postman)</button>
+            <button class="btn btn-outline" id="showTokenBtn" type="button" disabled title="Untuk dipakai di Postman">Lihat token</button>
             <button class="btn btn-outline" id="newTokenBtn" type="button">Buat token baru</button>
         </div>
     </div>
